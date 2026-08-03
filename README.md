@@ -4,7 +4,7 @@ Small Blender tools released independently and grouped in the UI by purpose.
 
 ## Download
 
-Download the current stable versions from the [Blender Add-on Tools download page](https://wyndf.github.io/blender-addons/).
+Download the current stable versions from the [Blender Add-on Tools download page](https://mushus.github.io/blender-addons/). The [Japanese page](https://mushus.github.io/blender-addons/ja/) is also available.
 
 The first extracted tool is `UV Island Mask`. It creates a mask image from selected UV faces and supports multiple edit-mode mesh objects, image name, resolution, and bake margin settings.
 
