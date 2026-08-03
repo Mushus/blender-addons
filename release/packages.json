@@ -1,0 +1,13 @@
+{
+  "suite_id": "blender_addon_suite",
+  "blender_target": "5.1",
+  "packages": [
+    {
+      "id": "uv_island_mask",
+      "source": "addons/uv_island_mask",
+      "status": "stable",
+      "group_id": "uv_utility",
+      "group_label": "UV Utility"
+    }
+  ]
+}

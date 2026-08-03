@@ -1,0 +1,12 @@
+{
+  "id": "uv_island_mask",
+  "display_name": "UV Island Mask",
+  "group_id": "uv_utility",
+  "group_label": "UV Utility",
+  "sort_order": 100,
+  "space_type": "IMAGE_EDITOR",
+  "region_type": "UI",
+  "category": "Edit",
+  "context_mode": "UV"
+}
+

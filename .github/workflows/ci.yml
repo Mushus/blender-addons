@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m ruff check .
+      - run: python -m basedpyright
+      - shell: pwsh
+        run: .\scripts\make_zip.ps1
+      - run: python scripts/check_zip_layout.py
+
+  blender:
+    runs-on: windows-latest
+    needs: static
+    strategy:
+      fail-fast: false
+      matrix:
+        blender-version: ["5.1"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Blender
+        uses: actions/cache@v4
+        with:
+          path: .blender-cache
+          key: blender-windows-${{ matrix.blender-version }}
+      - name: Install Blender
+        shell: pwsh
+        run: .\scripts\install_blender.ps1 -Version "${{ matrix.blender-version }}" -InstallRoot .\.blender-cache
+      - name: Build ZIPs
+        shell: pwsh
+        run: .\scripts\make_zip.ps1
+      - name: Smoke test individual ZIP
+        shell: pwsh
+        run: blender --background --factory-startup --python .\scripts\blender_smoke_test.py -- --zip .\dist\uv_island_mask.zip --module uv_island_mask
+      - name: Smoke test UV mask behavior and grouped host
+        shell: pwsh
+        run: blender --background --factory-startup --python .\scripts\uv_island_mask_smoke_test.py -- --zip .\dist\uv_island_mask.zip
+      - name: Smoke test suite ZIP
+        shell: pwsh
+        run: blender --background --factory-startup --python .\scripts\blender_smoke_test.py -- --zip .\dist\blender_addon_suite.zip --module blender_addon_suite
