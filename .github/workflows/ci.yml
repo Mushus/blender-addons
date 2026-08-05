@@ -6,46 +6,22 @@ on:
   workflow_dispatch:
 
 jobs:
-  static:
+  test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-      - run: python -m pip install -r requirements-dev.txt
-      - run: python -m ruff check .
-      - run: python -m basedpyright
-      - shell: pwsh
-        run: .\scripts\make_zip.ps1
-      - run: python scripts/check_zip_layout.py
-
-  blender:
-    runs-on: windows-latest
-    needs: static
     strategy:
       fail-fast: false
       matrix:
         blender-version: ["5.1"]
     steps:
       - uses: actions/checkout@v6
-      - name: Cache Blender
-        uses: actions/cache@v5
+      - name: Build Blender Docker image
+        run: docker build --build-arg BLENDER_MAJOR=${{ matrix.blender-version }} --build-arg BLENDER_VERSION=5.1.2 --tag blender-addon-tools:blender-${{ matrix.blender-version }} .
+      - name: Run full CI suite in Docker
+        run: docker run --rm --volume "${{ github.workspace }}:/workspace" --workdir /workspace blender-addon-tools:blender-${{ matrix.blender-version }} python ./scripts/run_ci.py
+      - name: Upload UI artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          path: .blender-cache
-          key: blender-windows-${{ matrix.blender-version }}
-      - name: Install Blender
-        shell: pwsh
-        run: .\scripts\install_blender.ps1 -Version "${{ matrix.blender-version }}" -InstallRoot .\.blender-cache
-      - name: Build ZIPs
-        shell: pwsh
-        run: .\scripts\make_zip.ps1
-      - name: Smoke test individual ZIP
-        shell: pwsh
-        run: blender --background --factory-startup --python .\scripts\blender_smoke_test.py -- --zip .\dist\uv_island_mask.zip --module uv_island_mask
-      - name: Smoke test UV mask behavior and grouped host
-        shell: pwsh
-        run: blender --background --factory-startup --python .\scripts\uv_island_mask_smoke_test.py -- --zip .\dist\uv_island_mask.zip
-      - name: Smoke test suite ZIP
-        shell: pwsh
-        run: blender --background --factory-startup --python .\scripts\blender_smoke_test.py -- --zip .\dist\blender_addon_suite.zip --module blender_addon_suite
+          name: ui-artifacts-blender-${{ matrix.blender-version }}
+          path: artifacts/
+          if-no-files-found: ignore

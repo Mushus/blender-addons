@@ -1,0 +1,16 @@
+.git/
+.github/
+.venv/
+.blender-cache/
+.ruff_cache/
+build/
+dist/
+site/_generated/
+__pycache__/
+*.py[cod]
+*.zip
+*.blend1
+*.blend2
+*.blend@
+*.blend~
+*.log

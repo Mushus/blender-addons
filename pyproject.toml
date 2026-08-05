@@ -35,4 +35,17 @@ reportMissingImports = false
 reportMissingModuleSource = false
 reportMissingTypeStubs = false
 reportOptionalMemberAccess = false
+[project]
+name = "blender-addons"
+version = "0.1.0"
+description = "Blender Add-on Tools"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+make-zip = "scripts.make_zip:main"
+prepare-release = "scripts.prepare_release:main"
+run-docker = "scripts.run_blender_docker:main"
+install-blender = "scripts.install_blender:main"
 

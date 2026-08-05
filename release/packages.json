@@ -8,6 +8,13 @@
       "status": "stable",
       "group_id": "uv_utility",
       "group_label": "UV Utility"
+    },
+    {
+      "id": "in_between_shape_key",
+      "source": "addons/in_between_shape_key",
+      "status": "stable",
+      "group_id": "in_between_shape_key",
+      "group_label": "In Between Shape Key"
     }
   ]
 }

@@ -1,0 +1,102 @@
+from __future__ import annotations
+
+import argparse
+import json
+import shutil
+import zipfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+DIST = ROOT / "dist"
+BUILD = ROOT / "build"
+PACKAGES_JSON = ROOT / "release" / "packages.json"
+
+
+def _stable_packages(catalog: dict, package_ids: list[str] | None) -> list[dict]:
+    selected = [
+        package
+        for package in catalog["packages"]
+        if package.get("status") == "stable"
+        and (not package_ids or package["id"] in package_ids)
+    ]
+    if not selected:
+        raise SystemExit("No stable packages selected.")
+    return selected
+
+
+def _zip_directory(source_dir: Path, zip_path: Path) -> None:
+    zip_path.parent.mkdir(parents=True, exist_ok=True)
+    if zip_path.exists():
+        zip_path.unlink()
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for path in sorted(source_dir.rglob("*")):
+            if path.is_dir():
+                continue
+            archive.write(path, path.relative_to(source_dir.parent).as_posix())
+
+
+def make_zips(
+    *,
+    package_ids: list[str] | None = None,
+    suite_package_ids: list[str] | None = None,
+    skip_suite: bool = False,
+) -> list[Path]:
+    catalog = json.loads(PACKAGES_JSON.read_text(encoding="utf-8"))
+    selected = _stable_packages(catalog, package_ids)
+    suite_selected = selected
+    if suite_package_ids:
+        suite_selected = _stable_packages(catalog, suite_package_ids)
+    if not skip_suite and not suite_selected:
+        raise SystemExit("No stable packages selected for the suite.")
+
+    if DIST.exists():
+        shutil.rmtree(DIST)
+    if BUILD.exists():
+        shutil.rmtree(BUILD)
+    DIST.mkdir(parents=True)
+    BUILD.mkdir(parents=True)
+
+    created: list[Path] = []
+
+    if not skip_suite:
+        suite_id = str(catalog["suite_id"])
+        suite_dir = BUILD / suite_id
+        (suite_dir / "addons").mkdir(parents=True)
+        shutil.copy2(ROOT / "__init__.py", suite_dir / "__init__.py")
+        shutil.copy2(ROOT / "addons" / "__init__.py", suite_dir / "addons" / "__init__.py")
+        for package in suite_selected:
+            source = ROOT / package["source"]
+            shutil.copytree(source, suite_dir / "addons" / Path(package["source"]).name)
+        zip_path = DIST / f"{suite_id}.zip"
+        _zip_directory(suite_dir, zip_path)
+        created.append(zip_path)
+
+    for package in selected:
+        package_id = package["id"]
+        package_dir = BUILD / package_id
+        shutil.copytree(ROOT / package["source"], package_dir)
+        zip_path = DIST / f"{package_id}.zip"
+        _zip_directory(package_dir, zip_path)
+        created.append(zip_path)
+
+    shutil.rmtree(BUILD)
+    return created
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Build add-on ZIP packages from release/packages.json.")
+    parser.add_argument("--package-id", action="append", dest="package_ids", default=[])
+    parser.add_argument("--suite-package-id", action="append", dest="suite_package_ids", default=[])
+    parser.add_argument("--skip-suite", action="store_true")
+    options = parser.parse_args()
+    created = make_zips(
+        package_ids=options.package_ids or None,
+        suite_package_ids=options.suite_package_ids or None,
+        skip_suite=options.skip_suite,
+    )
+    for path in created:
+        print(path)
+
+
+if __name__ == "__main__":
+    main()

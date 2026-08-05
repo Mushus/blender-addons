@@ -11,13 +11,27 @@ bl_info = {
 import sys
 from importlib import import_module, reload
 
-_CHILDREN = ("uv_island_mask",)
-_modules = []
+import bpy
+
+_CHILDREN = ("uv_island_mask", "in_between_shape_key")
+_RUNTIME_KEY = "blender_addon_suite.runtime.v1"
+
+
+def _runtime_state() -> dict | None:
+    return bpy.app.driver_namespace.get(_RUNTIME_KEY)
+
+
+def _set_modules(modules: list) -> None:
+    bpy.app.driver_namespace[_RUNTIME_KEY] = {"modules": modules}
+
+
+def _clear_runtime() -> None:
+    bpy.app.driver_namespace.pop(_RUNTIME_KEY, None)
 
 
 def register():
-    global _modules
-    _modules = []
+    unregister()
+    modules = []
     for name in _CHILDREN:
         module_name = f"{__package__}.addons.{name}"
         module = sys.modules.get(module_name)
@@ -25,14 +39,20 @@ def register():
             module = reload(module)
         else:
             module = import_module(module_name)
-        _modules.append(module)
-    for module in _modules:
+        modules.append(module)
+    _set_modules(modules)
+    for module in modules:
         module.register()
 
 
 def unregister():
+    state = _runtime_state()
+    modules = list((state or {}).get("modules") or [])
     try:
-        for module in reversed(_modules):
-            module.unregister()
+        for module in reversed(modules):
+            try:
+                module.unregister()
+            except Exception:
+                pass
     finally:
-        _modules.clear()
+        _clear_runtime()
