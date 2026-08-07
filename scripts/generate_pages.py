@@ -4,7 +4,6 @@ import ast
 import json
 import os
 import urllib.request
-from html import escape
 from pathlib import Path
 
 
@@ -27,7 +26,7 @@ def parse_bl_info(init_path: Path) -> dict:
         if isinstance(node, ast.Assign):
             for target in node.targets:
                 if isinstance(target, ast.Name) and target.id == "bl_info" and isinstance(node.value, ast.Dict):
-                    for k, v in zip(node.value.keys, node.value.values):
+                    for k, v in zip(node.value.keys, node.value.values, strict=True):
                         if isinstance(k, ast.Constant):
                             val = ast.literal_eval(v)
                             bl_info[k.value] = val
