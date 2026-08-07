@@ -4,17 +4,11 @@ description: 既存のシェイプキー間に中間シェイプ（インビト�
 ---
 
 import { Badge } from '@astrojs/starlight/components';
+import AddonDownloadLink from '../../../components/AddonDownloadLink.astro';
 
 <Badge text="Blender 4.0+" /> <Badge text="Animation / Rigging" />
 
-<div style="margin: 1.5rem 0;">
-  <a
-    href="https://github.com/Mushus/blender-addons/releases/latest/download/in_between_shape_key.zip"
-    class="download-btn"
-  >
-    In-Between Shape Key (.zip) をダウンロード
-  </a>
-</div>
+<AddonDownloadLink packageId="in_between_shape_key" />
 
 ## 概要
 

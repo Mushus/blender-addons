@@ -226,7 +226,26 @@ def main() -> None:
             subprocess.run([gh_bin, "release", "upload", tag_name, *assets, "--clobber"], cwd=PROJECT_ROOT, check=True, env=env)
             subprocess.run([gh_bin, "release", "edit", tag_name, "--title", tag_name, "--notes-file", str(body_path)], cwd=PROJECT_ROOT, check=True, env=env)
         else:
-            subprocess.run([gh_bin, "release", "create", tag_name, "--draft", "--title", tag_name, "--notes-file", str(body_path), *assets], cwd=PROJECT_ROOT, check=True, env=env)
+            release_target = run_command(["git", "rev-parse", "HEAD"])
+            subprocess.run(
+                [
+                    gh_bin,
+                    "release",
+                    "create",
+                    tag_name,
+                    "--draft",
+                    "--target",
+                    release_target,
+                    "--title",
+                    tag_name,
+                    "--notes-file",
+                    str(body_path),
+                    *assets,
+                ],
+                cwd=PROJECT_ROOT,
+                check=True,
+                env=env,
+            )
 
     print(f"Release assets: {release_dir}")
 

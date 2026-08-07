@@ -4,17 +4,11 @@ description: 頂点編集時にメッシュの形状を維持しながら頂点�
 ---
 
 import { Badge } from '@astrojs/starlight/components';
+import AddonDownloadLink from '../../../components/AddonDownloadLink.astro';
 
 <Badge text="Blender 4.0+" /> <Badge text="Mesh Tool" />
 
-<div style="margin: 1.5rem 0;">
-  <a
-    href="https://github.com/Mushus/blender-addons/releases/latest/download/slide_relax.zip"
-    class="download-btn"
-  >
-    Slide Relax (.zip) をダウンロード
-  </a>
-</div>
+<AddonDownloadLink packageId="slide_relax" />
 
 ## 概要
 

@@ -20,6 +20,12 @@ def parse_args():
     return parser.parse_args(raw)
 
 
+def clear_factory_mesh() -> None:
+    """factory startup の Cube が Edit Mode に混入しないように消す。"""
+    bpy.ops.object.select_all(action="SELECT")
+    bpy.ops.object.delete(use_global=False)
+
+
 def make_fan(name: str):
     """中心点が偏った扇形。接線緩和の移動量を既知座標で検証するため。"""
     mesh = bpy.data.meshes.new(f"{name} Mesh")
@@ -34,21 +40,25 @@ def make_fan(name: str):
     return obj
 
 
-def select_center(mesh) -> None:
+def _apply_vert_selection(mesh, indices: set[int]) -> None:
+    """頂点選択だけを残す。面/辺の選択が残ると update 時に頂点へ再フラッシュされる。"""
     bm = bmesh.from_edit_mesh(mesh)
     bm.verts.ensure_lookup_table()
-    for vert in bm.verts:
-        vert.select = False
-    bm.verts[4].select = True
-    bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
-
-
-def select_vertices(mesh, indices: set[int]) -> None:
-    bm = bmesh.from_edit_mesh(mesh)
-    bm.verts.ensure_lookup_table()
+    for face in bm.faces:
+        face.select = False
+    for edge in bm.edges:
+        edge.select = False
     for vert in bm.verts:
         vert.select = vert.index in indices
     bmesh.update_edit_mesh(mesh, loop_triangles=False, destructive=False)
+
+
+def select_center(mesh) -> None:
+    _apply_vert_selection(mesh, {4})
+
+
+def select_vertices(mesh, indices: set[int]) -> None:
+    _apply_vert_selection(mesh, indices)
 
 
 def center_coordinate(mesh):
@@ -64,9 +74,9 @@ def vert_coordinate(mesh, index: int):
 
 
 def test_slide_relax():
-    """背景: マルチオブジェクト Edit Mode と境界保持が本番の主要経路。
-    なぜ: 選択頂点だけ動き、非選択は不変、strength=0 は無変更、
-    境界頂点は内向きに動かないことを回帰で固定する。
+    """背景: マルチオブジェクト Edit Mode が本番の主要経路。
+    なぜ: 選択頂点だけ動き、非選択オブジェクトは不変、strength=0 は無変更を固定する。
+    境界スライドの詳細は test_boundary_slide_preserves_outline で見る。
     """
     first = make_fan("Slide Relax First")
     second = make_fan("Slide Relax Second")
@@ -100,12 +110,13 @@ def test_slide_relax():
     assert center_coordinate(first.data) == before_zero
 
     settings.strength = 0.5
-    assert settings.preserve_boundaries
-    select_vertices(first.data, {0})
+    select_vertices(first.data, {4})
     select_vertices(second.data, set())
-    boundary_before = vert_coordinate(first.data, 0)
+    first_before = center_coordinate(first.data)
+    second_before = center_coordinate(second.data)
     assert bpy.ops.slide_relax.slide_relax() == {"FINISHED"}
-    assert vert_coordinate(first.data, 0) == boundary_before
+    assert center_coordinate(first.data) != first_before
+    assert center_coordinate(second.data) == second_before
 
     bpy.ops.object.mode_set(mode="OBJECT")
     bpy.data.objects.remove(first, do_unlink=True)
@@ -161,6 +172,7 @@ def main():
     host_state = bpy.app.driver_namespace["blender_addon_tools.embedded_host.v1"]
     assert "slide_relax" in host_state["tools"]
     assert "mesh_utility" in host_state["groups"]
+    clear_factory_mesh()
     try:
         test_slide_relax()
         test_boundary_slide_preserves_outline()

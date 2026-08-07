@@ -98,3 +98,13 @@ Blender のランタイムテストは、埋め込み Blender MCP セッショ�
 - ZIP 生成: `uv run make-zip`（`scripts/make_zip.py`）
 - リリース検証: `uv run prepare-release`（`scripts/prepare_release.py`）
 - ツール版の正は `addons/<tool>/__init__.py` の `bl_info["version"]`
+
+```mermaid
+flowchart LR
+  main["main へマージ"] --> ci["CI 成功"]
+  ci --> draft["Draft Release 作成"]
+  draft["CI 成功コミットの Draft Release"] --> publish["Release を publish"]
+  publish --> pages["GitHub Pages を公開"]
+```
+
+ダウンロード一覧と各アドオンページは、公開済み Release の manifest から ZIP URL を生成する。Release を publish するまで、サイトは更新されない。

@@ -53,7 +53,7 @@ def get_local_fallback_packages(repo_url: str) -> tuple[dict[str, dict], dict | 
                     "group_label": bl_info.get("category", "General"),
                     "version": version_str,
                     "blender_target": blender_str,
-                    "url": f"{repo_url}/releases/latest/download/{pkg_id}.zip",
+                    "url": None,
                     "doc_link": f"/addons/{pkg_id.replace('_', '-')}/",
                 }
     return latest, None
@@ -117,4 +117,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

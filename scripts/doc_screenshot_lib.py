@@ -172,12 +172,23 @@ def _root_image_size(root_png: Path) -> tuple[int, int]:
     return int(width_text), int(height_text)
 
 
-def crop_region_to_png(region, output_path: Path) -> Path:
-    """Blender region（原点は左下）を X11 root PNG（原点は左上）から切り出す。"""
+def crop_region_to_png(
+    region,
+    output_path: Path,
+    *,
+    context_left_px: int = 160,
+) -> Path:
+    """Blender region（原点は左下）を X11 root PNG（原点は左上）から切り出す。
+
+    context_left_px > 0 のとき、領域左側のエディタを少し含め配置場所が分かるようにする。
+    """
+    if context_left_px < 0:
+        raise DocShotError(f"Invalid context_left_px: {context_left_px}")
+
     root_png = _capture_root_png()
     full_w, full_h = _root_image_size(root_png)
-    crop_x = max(0, min(region.x, full_w - 1))
-    crop_w = max(1, min(region.width, full_w - crop_x))
+    crop_x = max(0, min(region.x - context_left_px, full_w - 1))
+    crop_w = max(1, min(region.x + region.width - crop_x, full_w - crop_x))
     top = max(0, full_h - (region.y + region.height))
     crop_h = max(1, min(region.height, full_h - top))
 
@@ -231,6 +242,7 @@ def _largest_content_band(
     *,
     threshold: int,
     min_pixels: int,
+    ignore_left: int,
     ignore_right: int,
     gap_tol: int,
     min_band_height: int,
@@ -239,14 +251,18 @@ def _largest_content_band(
 
     VIEW_3D の SoftGL では空 N パネルにビューポートが透け、下側のノイズ帯が
     最大になり得る。上端から見て十分な高さの最初の帯を採用する。
+    左の配置コンテキスト帯と右の縦タブは判定から除外する。
     """
-    bg = rgb[0:3]
-    usable = max(1, width - max(0, ignore_right))
+    bg_x = min(width - 1, max(0, ignore_left) + 4)
+    bg_i = bg_x * 3
+    bg = rgb[bg_i : bg_i + 3]
+    x0 = max(0, ignore_left)
+    x1 = max(x0 + 1, width - max(0, ignore_right))
     content = [False] * height
     for y in range(height):
         row = y * width * 3
         hits = 0
-        for x in range(usable):
+        for x in range(x0, x1):
             i = row + x * 3
             d = max(
                 abs(rgb[i] - bg[0]),
@@ -293,47 +309,55 @@ def trim_content_margins(
     *,
     threshold: int = 8,
     min_pixels: int = 5,
+    ignore_left: int = 160,
     ignore_right: int = 28,
     gap_tol: int = 2,
     min_band_height: int = 48,
-    padding_px: int = 8,
+    padding_bottom_px: int = 32,
+    min_tab_column_px: int = 220,
     min_width: int = 32,
     min_height: int = 32,
 ) -> Path:
-    """中身の上端バンドに合わせて縦余白を落とす。
+    """中身の下端に合わせて縦余白を落とす。上端は残す。
 
-    SoftGL 由来の下端ノイズや、縦タブ帯の空きは除外する。
-    幅はタブを残すため基本的に維持し、高さだけ詰める。
+    N パネルの縦タブで配置場所が分かるよう、領域上端は切らない。
+    タブ列（Edit など）が欠けないよう最小高さを確保し、下に padding を足す。
     """
     if threshold < 0 or threshold > 255:
         raise DocShotError(f"Invalid threshold: {threshold}")
     if min_pixels < 1:
         raise DocShotError(f"Invalid min_pixels: {min_pixels}")
-    if padding_px < 0:
-        raise DocShotError(f"Invalid padding_px: {padding_px}")
+    if padding_bottom_px < 0:
+        raise DocShotError(f"Invalid padding_bottom_px: {padding_bottom_px}")
     if min_band_height < 1:
         raise DocShotError(f"Invalid min_band_height: {min_band_height}")
+    if min_tab_column_px < 0:
+        raise DocShotError(f"Invalid min_tab_column_px: {min_tab_column_px}")
+    if ignore_left < 0:
+        raise DocShotError(f"Invalid ignore_left: {ignore_left}")
 
     before_w, before_h = _root_image_size(png_path)
     width, height, rgb = _load_rgb8(png_path)
     if (width, height) != (before_w, before_h):
         raise DocShotError(f"PNG size mismatch: identify={before_w}x{before_h} rgb={width}x{height}")
 
-    y0, y1 = _largest_content_band(
+    _y0, y1 = _largest_content_band(
         width,
         height,
         rgb,
         threshold=threshold,
         min_pixels=min_pixels,
+        ignore_left=ignore_left,
         ignore_right=ignore_right,
         gap_tol=gap_tol,
         min_band_height=min_band_height,
     )
-    crop_y = max(0, y0 - padding_px)
-    crop_h = min(height, y1 + 1 + padding_px) - crop_y
+    # 上端のタブ列を残す。下は中身終端とタブ列最小高の大きい方。
+    crop_y = 0
+    crop_h = min(height, max(y1 + 1 + padding_bottom_px, min_tab_column_px))
     if crop_h < min_height or width < min_width:
         raise DocShotError(
-            f"Content trim bbox too small: {width}x{crop_h} from band {y0}..{y1} in {width}x{height}"
+            f"Content trim bbox too small: {width}x{crop_h} from band ..{y1} in {width}x{height}"
         )
 
     completed = subprocess.run(
