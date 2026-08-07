@@ -28,14 +28,20 @@ export default defineConfig({
             { label: 'はじめに', link: '/guides/getting-started/' },
             { label: 'ダウンロード一覧', link: '/downloads/' },
             { label: 'インストール方法', link: '/guides/installation/' },
-            { label: 'よくある質問・トラブルシューティング', link: '/guides/faq/' },
+            {
+              label: 'よくある質問・トラブルシューティング',
+              link: '/guides/faq/',
+            },
           ],
         },
         {
           label: 'アドオン解説',
           items: [
             { label: 'Edit Vertex Relax', link: '/addons/edit-vertex-relax/' },
-            { label: 'In-Between Shape Key', link: '/addons/in-between-shape-key/' },
+            {
+              label: 'In-Between Shape Key',
+              link: '/addons/in-between-shape-key/',
+            },
             { label: 'UV Island Mask', link: '/addons/uv-island-mask/' },
           ],
         },

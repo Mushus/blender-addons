@@ -8,7 +8,10 @@ import { Badge } from '@astrojs/starlight/components';
 <Badge text="Blender 4.0+" /> <Badge text="Mesh Tool" />
 
 <div style="margin: 1.5rem 0;">
-  <a href="https://github.com/Mushus/blender-addons/releases/latest/download/edit_vertex_relax.zip" class="download-btn">
+  <a
+    href="https://github.com/Mushus/blender-addons/releases/latest/download/edit_vertex_relax.zip"
+    class="download-btn"
+  >
     Edit Vertex Relax (.zip) をダウンロード
   </a>
 </div>
@@ -34,8 +37,8 @@ import { Badge } from '@astrojs/starlight/components';
 
 ### 主なパラメータ
 
-| パラメータ | 説明 |
-| :--- | :--- |
-| **Iterations** | リラックス処理の繰り返し回数（数値が大きいほど均等化されます） |
-| **Factor** | リラックスの適用強度（0.0 〜 1.0） |
-| **Keep Boundary** | 外周境界の頂点位置を固定したまま内部のみを緩和します |
+| パラメータ        | 説明                                                           |
+| :---------------- | :------------------------------------------------------------- |
+| **Iterations**    | リラックス処理の繰り返し回数（数値が大きいほど均等化されます） |
+| **Factor**        | リラックスの適用強度（0.0 〜 1.0）                             |
+| **Keep Boundary** | 外周境界の頂点位置を固定したまま内部のみを緩和します           |

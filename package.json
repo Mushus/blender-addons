@@ -8,7 +8,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "site:dev": "uv run python scripts/generate_pages.py && pnpm --filter site dev",
     "site:build": "uv run python scripts/generate_pages.py && pnpm --filter site build",
-    "site:preview": "pnpm --filter site preview"
+    "site:preview": "pnpm --filter site preview",
+    "site:lint": "pnpm --filter site lint",
+    "site:format": "pnpm --filter site format",
+    "site:format:check": "pnpm --filter site format:check"
   },
   "keywords": [],
   "author": "",
