@@ -18,7 +18,8 @@ const labels = {
   tool: isJa ? 'ツール' : 'Tool',
   version: isJa ? 'バージョン' : 'Version',
   target: isJa ? '対応Blender' : 'Target Blender',
-  download: isJa ? 'ZIPをダウンロード' : 'Download ZIP',
+  download: isJa ? 'ダウンロード' : 'Download',
+  downloadAction: isJa ? 'ZIPをダウンロード' : 'Download ZIP',
   noData: isJa
     ? '利用可能なダウンロード情報がありません。'
     : 'No download info available.',
@@ -49,7 +50,7 @@ const suite = packagesData.suite;
             <th>{labels.tool}</th>
             <th>{labels.version}</th>
             <th>{labels.target}</th>
-            <th />
+            <th>{labels.download}</th>
           </tr>
         </thead>
         <tbody>
@@ -67,7 +68,7 @@ const suite = packagesData.suite;
               </td>
               <td>{pkg.version}</td>
               <td>Blender {pkg.blender_target}</td>
-              <td>{pkg.url ? <a href={pkg.url}>{labels.download}</a> : '-'}</td>
+              <td>{pkg.url ? <a href={pkg.url}>{labels.downloadAction}</a> : '-'}</td>
             </tr>
           ))}
         </tbody>

@@ -26,9 +26,13 @@ Document: ./docs/index.md
 
 # Workflow
 
-1. 実装
-2. 品質ゲート（すべて通るまで修正）
-3. zip 生成
+```
+let code;
+do {
+  code = coding()
+} while(test(code));
+generateZip();
+```
 
 * 仕様にないフォールバックは禁止。エラーで即時中断を優先
 * 常にロバストなアルゴリズムを使う
