@@ -109,6 +109,7 @@ flowchart LR
 ```
 
 - 通常: CI 成功後に Draft が作られる。同日の Release が既に publish 済みなら翌日送り。
-- リカバリ: Actions の **Draft Release** を `regenerate=true` で手動実行 → 同日タグを消して Draft を作り直す → 再度 publish。
+- リカバリ (Draft): Actions の **Draft Release** を `regenerate=true` で手動実行 → 同日タグを消して Draft を作り直す → 再度 publish。
+- リカバリ (Docs のみ): Actions の **Deploy Documentation Site to GitHub Pages** を `main` で Run workflow し、`release_tag` に対象タグを指定する。`release` イベント自体はタグ側の古い workflow 定義を使うため、Docs の Node / pnpm 修正は default branch からの dispatch で適用する。
 
 ダウンロード一覧は `site` の Astro 起動時に、公開済み Release の manifest から ZIP URL を生成する。Release を publish するまで、サイトは更新されない。

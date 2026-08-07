@@ -1,26 +1,50 @@
 name: Deploy Documentation Site to GitHub Pages
 
+# release イベントの workflow 定義は「タグが指すコミット」から読まれる。
+# 古いタグの republish でも main 上の Node / pnpm 設定を使うため、
+# release では default branch へ workflow_dispatch し直してからビルドする。
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag to build (site content + packages index)"
+        required: true
+        type: string
 
 permissions:
   contents: read
   pages: write
   id-token: write
+  actions: write
 
 concurrency:
   group: 'pages'
   cancel-in-progress: true
 
 jobs:
+  relay:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch deploy from default branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run deploy-docs.yml \
+            --repo "${{ github.repository }}" \
+            --ref "${{ github.event.repository.default_branch }}" \
+            -f "release_tag=${{ github.event.release.tag_name }}"
+
   build:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ inputs.release_tag }}
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -35,7 +59,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
-          node-version: 25
+          # pnpm 11 requires Node >= 22.13 (uses node:sqlite)
+          node-version: 22
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -53,6 +78,7 @@ jobs:
           path: site/dist
 
   deploy:
+    if: github.event_name == 'workflow_dispatch'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
