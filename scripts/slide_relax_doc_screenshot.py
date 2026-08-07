@@ -1,4 +1,4 @@
-"""ドキュメント用スクリーンショット: edit_vertex_relax。
+"""ドキュメント用スクリーンショット: slide_relax。
 
 背景: サイドバー Edit タブのツール UI が docs の主な説明対象。
 なぜ: Docker / Xvfb 上で UI 領域を固定条件で撮り、手動スクショ依存を減らす。
@@ -27,13 +27,13 @@ from doc_screenshot_lib import (
 
 def _shot(output_dir: Path) -> list[Path]:
     options = parse_shot_args()
-    enable_addon(Path(options.zip), "edit_vertex_relax")
+    enable_addon(Path(options.zip), "slide_relax")
 
-    obj = create_edit_mesh("Edit Vertex Relax Doc")
+    obj = create_edit_mesh("Slide Relax Doc")
     enter_edit_mode(obj)
     bpy.ops.mesh.select_all(action="SELECT")
 
-    settings = bpy.context.scene.edit_vertex_relax
+    settings = bpy.context.scene.slide_relax
     settings.expanded = True
 
     area = find_area("VIEW_3D")

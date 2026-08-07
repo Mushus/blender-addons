@@ -1,6 +1,6 @@
 {
-  "id": "edit_vertex_relax",
-  "display_name": "Selected Vertex Relax",
+  "id": "slide_relax",
+  "display_name": "Slide Relax",
   "group_id": "mesh_utility",
   "group_label": "Mesh Utility",
   "sort_order": 100,

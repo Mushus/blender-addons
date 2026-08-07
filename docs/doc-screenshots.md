@@ -12,7 +12,7 @@ uv run run-docker --exec -- python ./scripts/run_doc_screenshots.py
 個別:
 
 ```bash
-uv run run-docker --exec -- python ./scripts/run_doc_screenshots.py --only edit_vertex_relax
+uv run run-docker --exec -- python ./scripts/run_doc_screenshots.py --only slide_relax
 ```
 
 一覧:
@@ -22,6 +22,8 @@ uv run run-docker --exec -- python ./scripts/run_doc_screenshots.py --list
 ```
 
 出力先（既定）: `artifacts/doc-screenshots/<package_id>/*.png`
+
+サイト掲載時は PNG を `site/src/assets/addons/<package_id>/` にコピーし、各アドオン MDX から参照する。
 
 ## 構成
 
@@ -45,6 +47,9 @@ flowchart LR
 ## SoftGL 制約
 
 Blender のスクショ演算子は空バッファになりやすい。仮想ディスプレイ全体を `import` し、Blender region 座標で `convert -crop` する。
+
+領域切り出し後、背景差分から中身行の帯を求め、上端の十分な高さの帯に合わせて縦余白を落とす（パディング 8px）。
+VIEW_3D で SoftGL が下側にビューポートノイズを出す場合でも、上端バンドを優先する。
 
 ## 新しい撮影エントリ
 

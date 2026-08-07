@@ -37,13 +37,16 @@ def _prepare_uv_editor():
     area = largest_area()
     set_area_type(area, "IMAGE_EDITOR")
     space = area.spaces.active
-    # Blender 版差: mode / ui_mode のどちらかで UV 編集を表す。
-    if hasattr(space, "ui_mode"):
-        space.ui_mode = "UV"
-    elif hasattr(space, "mode"):
+    # Blender 5.x: UV は mode 側。ui_mode は VIEW/PAINT/MASK のみ。
+    if hasattr(space, "mode"):
         space.mode = "UV"
+    elif hasattr(space, "ui_mode"):
+        space.ui_mode = "UV"
     else:
         raise RuntimeError("IMAGE_EDITOR space has neither mode nor ui_mode")
+    current = getattr(space, "mode", getattr(space, "ui_mode", None))
+    if current != "UV":
+        raise RuntimeError(f"Could not enter UV editor mode (got {current!r})")
     ensure_region_ui(area)
     set_panel_category(area, "Edit")
     return area

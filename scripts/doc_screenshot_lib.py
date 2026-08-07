@@ -98,16 +98,32 @@ def ensure_region_ui(area) -> None:
 
 
 def set_panel_category(area, category: str) -> None:
-    """N パネル等のタブを切り替える。Blender 3.5+ の Region API を必須とする。"""
+    """N パネル等のタブを切り替える。
+
+    Blender 5.x ではカテゴリ一覧が初回描画後に生成される。
+    未描画だと active_panel_category が read-only になるため、先に redraw する。
+    """
     region = find_region(area, "UI")
     if not hasattr(region, "active_panel_category"):
         raise DocShotError("Region.active_panel_category is required (Blender 3.5+)")
-    region.active_panel_category = category
+
+    # カテゴリ enum を実体化させる。
+    redraw_area(area, region, iterations=6)
+
+    try:
+        region.active_panel_category = category
+    except AttributeError as exc:
+        raise DocShotError(
+            f"active_panel_category still read-only after redraw "
+            f"(wanted={category!r}, current={region.active_panel_category!r})"
+        ) from exc
+
     if region.active_panel_category != category:
         raise DocShotError(
             f"Could not activate panel category {category!r} "
             f"(active={region.active_panel_category!r})"
         )
+    redraw_area(area, region, iterations=2)
 
 
 def redraw_area(area, region=None, iterations: int = 4) -> None:
@@ -187,7 +203,165 @@ def crop_region_to_png(region, output_path: Path) -> Path:
             f"code={completed.returncode}, stderr={completed.stderr.strip()}, "
             f"size={output_path.stat().st_size if output_path.exists() else None}"
         )
-    return output_path
+    return trim_content_margins(output_path)
+
+
+def _load_rgb8(png_path: Path) -> tuple[int, int, bytes]:
+    """ImageMagick 経由で 8-bit RGB 生画素を読む。"""
+    width, height = _root_image_size(png_path)
+    completed = subprocess.run(
+        ["convert", str(png_path), "-depth", "8", "rgb:-"],
+        check=False,
+        capture_output=True,
+    )
+    if completed.returncode != 0:
+        raise DocShotError(f"Failed to decode PNG pixels: {completed.stderr.decode('utf-8', 'replace')}")
+    expected = width * height * 3
+    if len(completed.stdout) != expected:
+        raise DocShotError(
+            f"Unexpected RGB buffer size for {png_path}: got {len(completed.stdout)}, expected {expected}"
+        )
+    return width, height, completed.stdout
+
+
+def _largest_content_band(
+    width: int,
+    height: int,
+    rgb: bytes,
+    *,
+    threshold: int,
+    min_pixels: int,
+    ignore_right: int,
+    gap_tol: int,
+    min_band_height: int,
+) -> tuple[int, int]:
+    """背景との差分が大きい行から、docs 用に残す帯を選ぶ。
+
+    VIEW_3D の SoftGL では空 N パネルにビューポートが透け、下側のノイズ帯が
+    最大になり得る。上端から見て十分な高さの最初の帯を採用する。
+    """
+    bg = rgb[0:3]
+    usable = max(1, width - max(0, ignore_right))
+    content = [False] * height
+    for y in range(height):
+        row = y * width * 3
+        hits = 0
+        for x in range(usable):
+            i = row + x * 3
+            d = max(
+                abs(rgb[i] - bg[0]),
+                abs(rgb[i + 1] - bg[1]),
+                abs(rgb[i + 2] - bg[2]),
+            )
+            if d > threshold:
+                hits += 1
+                if hits >= min_pixels:
+                    content[y] = True
+                    break
+
+    bands: list[tuple[int, int]] = []
+    start = None
+    last = None
+    for y, is_content in enumerate(content):
+        if not is_content:
+            continue
+        if start is None:
+            start = last = y
+            continue
+        assert last is not None
+        if y - last <= gap_tol + 1:
+            last = y
+            continue
+        bands.append((start, last))
+        start = last = y
+    if start is not None and last is not None:
+        bands.append((start, last))
+    if not bands:
+        raise DocShotError("Content trim found no non-background rows")
+
+    substantial = [band for band in bands if band[1] - band[0] + 1 >= min_band_height]
+    if not substantial:
+        raise DocShotError(
+            "Content trim found no band taller than "
+            f"{min_band_height}px (bands={bands})"
+        )
+    return substantial[0]
+
+
+def trim_content_margins(
+    png_path: Path,
+    *,
+    threshold: int = 8,
+    min_pixels: int = 5,
+    ignore_right: int = 28,
+    gap_tol: int = 2,
+    min_band_height: int = 48,
+    padding_px: int = 8,
+    min_width: int = 32,
+    min_height: int = 32,
+) -> Path:
+    """中身の上端バンドに合わせて縦余白を落とす。
+
+    SoftGL 由来の下端ノイズや、縦タブ帯の空きは除外する。
+    幅はタブを残すため基本的に維持し、高さだけ詰める。
+    """
+    if threshold < 0 or threshold > 255:
+        raise DocShotError(f"Invalid threshold: {threshold}")
+    if min_pixels < 1:
+        raise DocShotError(f"Invalid min_pixels: {min_pixels}")
+    if padding_px < 0:
+        raise DocShotError(f"Invalid padding_px: {padding_px}")
+    if min_band_height < 1:
+        raise DocShotError(f"Invalid min_band_height: {min_band_height}")
+
+    before_w, before_h = _root_image_size(png_path)
+    width, height, rgb = _load_rgb8(png_path)
+    if (width, height) != (before_w, before_h):
+        raise DocShotError(f"PNG size mismatch: identify={before_w}x{before_h} rgb={width}x{height}")
+
+    y0, y1 = _largest_content_band(
+        width,
+        height,
+        rgb,
+        threshold=threshold,
+        min_pixels=min_pixels,
+        ignore_right=ignore_right,
+        gap_tol=gap_tol,
+        min_band_height=min_band_height,
+    )
+    crop_y = max(0, y0 - padding_px)
+    crop_h = min(height, y1 + 1 + padding_px) - crop_y
+    if crop_h < min_height or width < min_width:
+        raise DocShotError(
+            f"Content trim bbox too small: {width}x{crop_h} from band {y0}..{y1} in {width}x{height}"
+        )
+
+    completed = subprocess.run(
+        [
+            "convert",
+            str(png_path),
+            "-crop",
+            f"{width}x{crop_h}+0+{crop_y}",
+            "+repage",
+            str(png_path),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if completed.returncode != 0 or not png_path.exists() or png_path.stat().st_size < 100:
+        raise DocShotError(
+            "Content trim crop failed: "
+            f"code={completed.returncode}, stderr={completed.stderr.strip()}, "
+            f"size={png_path.stat().st_size if png_path.exists() else None}"
+        )
+
+    after_w, after_h = _root_image_size(png_path)
+    if after_w != width or after_h != crop_h:
+        raise DocShotError(
+            f"Content trim result size mismatch: expected {width}x{crop_h}, got {after_w}x{after_h}"
+        )
+    return png_path
 
 
 def capture_region(area, region_type: str, output_path: Path) -> Path:

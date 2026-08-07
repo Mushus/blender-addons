@@ -4,7 +4,7 @@ bl_info = {
     "version": (2026, 8, 7),
     "blender": (5, 1, 0),
     "location": "UV Editor > Sidebar > Edit; 3D View > Sidebar > Edit; Properties > Data > Shape Keys; File > Export > FBX (.fbx)",
-    "description": "UV Island Mask, Edit Mode Selected Vertex Relax, and In Between Shape Key.",
+    "description": "UV Island Mask, Slide Relax, and In Between Shape Key.",
     "category": "3D View",
 }
 
@@ -13,7 +13,7 @@ from importlib import import_module, reload
 
 import bpy
 
-_CHILDREN = ("uv_island_mask", "in_between_shape_key", "edit_vertex_relax")
+_CHILDREN = ("uv_island_mask", "in_between_shape_key", "slide_relax")
 _RUNTIME_KEY = "blender_addon_suite.runtime.v1"
 
 

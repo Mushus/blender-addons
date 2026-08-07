@@ -1,5 +1,5 @@
 ---
-title: Edit Vertex Relax
+title: Slide Relax
 description: 頂点編集時にメッシュの形状を維持しながら頂点配置を滑らかにするリラックスツール
 ---
 
@@ -9,36 +9,38 @@ import { Badge } from '@astrojs/starlight/components';
 
 <div style="margin: 1.5rem 0;">
   <a
-    href="https://github.com/Mushus/blender-addons/releases/latest/download/edit_vertex_relax.zip"
+    href="https://github.com/Mushus/blender-addons/releases/latest/download/slide_relax.zip"
     class="download-btn"
   >
-    Edit Vertex Relax (.zip) をダウンロード
+    Slide Relax (.zip) をダウンロード
   </a>
 </div>
 
 ## 概要
 
-**Edit Vertex Relax** は、編集モードにおいて指定した頂点群の密度・配置を滑らかに緩和（リラックス）するアドオンです。
+**Slide Relax** は、編集モードにおいて指定した頂点群の密度・配置を滑らかに緩和（リラックス）するアドオンです。
 ハイポリメッシュのトポロジー調整や、有機的モデルの表面のスムージング作業を高速化します。
 
 ---
 
 ## UIの配置場所
 
-3D ビューポート > 編集モード (Edit Mode) > メッシュメニュー、またはサイドバー (`N` キー) 内の `Edit` タブに配置されます。
+3D ビューポート > 編集モード (Edit Mode) > サイドバー (`N` キー) 内の `Edit` タブに配置されます。
+
+![Slide Relax サイドバー](../../../assets/addons/slide_relax/sidebar.png)
 
 ---
 
 ## 主な機能と使い方
 
 1. 編集モードでリラックスさせたい頂点（またはエッジ/面）を選択します。
-2. 3D ビューポート内でコンテキストメニュー（右クリック）を開くか、サイドバーの **Vertex Relax** ボタンをクリックします。
-3. 画面左下に表示されるオペレータパネルで繰り返し回数やスムーズ強度を微調整します。
+2. サイドバーの **Slide Relax** ボタンをクリックします。
+3. Strength / Iterations / Preserve Boundaries で強度と境界の扱いを調整します。
 
 ### 主なパラメータ
 
-| パラメータ        | 説明                                                           |
-| :---------------- | :------------------------------------------------------------- |
-| **Iterations**    | リラックス処理の繰り返し回数（数値が大きいほど均等化されます） |
-| **Factor**        | リラックスの適用強度（0.0 〜 1.0）                             |
-| **Keep Boundary** | 外周境界の頂点位置を固定したまま内部のみを緩和します           |
+| パラメータ | 説明 |
+| :--- | :--- |
+| **Strength** | 1 回あたりの接線方向への緩和量（0.0 〜 1.0） |
+| **Iterations** | リラックス処理の繰り返し回数 |
+| **Preserve Boundaries** | 境界頂点の内向き移動を抑え、輪郭の収縮を防ぎます |

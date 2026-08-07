@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import bpy
 
-RUNTIME_KEY = "edit_vertex_relax.runtime.v1"
+RUNTIME_KEY = "slide_relax.runtime.v1"
 HOST_KEY = "blender_addon_tools.embedded_host.v1"
 
 
@@ -35,9 +35,9 @@ def uninstall() -> None:
     state = get_state()
     if state is None:
         # state が消えていても Scene プロパティだけ残っていることがある。
-        if hasattr(bpy.types.Scene, "edit_vertex_relax"):
+        if hasattr(bpy.types.Scene, "slide_relax"):
             try:
-                del bpy.types.Scene.edit_vertex_relax
+                del bpy.types.Scene.slide_relax
             except (AttributeError, TypeError):
                 pass
         return

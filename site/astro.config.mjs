@@ -37,7 +37,7 @@ export default defineConfig({
         {
           label: 'アドオン解説',
           items: [
-            { label: 'Edit Vertex Relax', link: '/addons/edit-vertex-relax/' },
+            { label: 'Slide Relax', link: '/addons/slide-relax/' },
             {
               label: 'In-Between Shape Key',
               link: '/addons/in-between-shape-key/',

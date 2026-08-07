@@ -35,7 +35,7 @@ def boundary_inward_direction(vert, positions):
     return inward.normalized() if inward.length_squared > 0.0 else None
 
 
-def relax_selected_vertices(mesh, strength: float, iterations: int, preserve_boundaries: bool) -> tuple[int, int]:
+def slide_relax_vertices(mesh, strength: float, iterations: int, preserve_boundaries: bool) -> tuple[int, int]:
     """選択頂点を局所接線平面上で緩和する。
 
     各パスは座標スナップショット上で変位を計算する。BMesh 走査順に依存しない。
@@ -85,9 +85,9 @@ def relax_selected_vertices(mesh, strength: float, iterations: int, preserve_bou
     return len(selected), len(movable)
 
 
-class EVR_OT_relax_selected_vertices(bpy.types.Operator):
-    bl_idname = "edit_vertex_relax.relax_selected_vertices"
-    bl_label = "Relax Selected Vertices"
+class SR_OT_slide_relax(bpy.types.Operator):
+    bl_idname = "slide_relax.slide_relax"
+    bl_label = "Slide Relax"
     bl_description = "Relax selected vertices while preserving their local surface shape"
     bl_options = {"REGISTER", "UNDO"}
 
@@ -96,11 +96,11 @@ class EVR_OT_relax_selected_vertices(bpy.types.Operator):
         return context.mode == "EDIT_MESH" and bool(edit_mesh_objects(context))
 
     def execute(self, context):
-        settings = context.scene.edit_vertex_relax
+        settings = context.scene.slide_relax
         selected_count = 0
         movable_count = 0
         for obj in edit_mesh_objects(context):
-            selected, movable = relax_selected_vertices(
+            selected, movable = slide_relax_vertices(
                 obj.data,
                 settings.strength,
                 settings.iterations,

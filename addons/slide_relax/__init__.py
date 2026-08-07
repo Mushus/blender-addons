@@ -6,7 +6,7 @@ from importlib import import_module, reload
 import bpy
 
 bl_info = {
-    "name": "Edit Mode Selected Vertex Relax",
+    "name": "Slide Relax",
     "author": "Mushus",
     "version": (2026, 8, 7),
     "blender": (5, 1, 0),
@@ -15,7 +15,7 @@ bl_info = {
     "category": "Mesh",
 }
 
-_tool_id = "edit_vertex_relax"
+_tool_id = "slide_relax"
 
 # reload 順: 依存先を先に読む。runtime は register 側で別途取り直す。
 _CHILD_MODULES = (
@@ -54,7 +54,7 @@ def register() -> None:
     runtime_mod = import_module(f"{__package__}.runtime")
 
     host, operator_module, properties_module, ui_module = _bindings()
-    classes = (properties_module.EVR_Settings, operator_module.EVR_OT_relax_selected_vertices)
+    classes = (properties_module.SR_Settings, operator_module.SR_OT_slide_relax)
 
     # 以後の登録ハンドルはすべて state に保存し、uninstall はこれだけを見る。
     state = runtime_mod.begin_state()
@@ -62,8 +62,8 @@ def register() -> None:
         bpy.utils.register_class(cls)
         state["classes"].append(cls)
 
-    bpy.types.Scene.edit_vertex_relax = bpy.props.PointerProperty(type=properties_module.EVR_Settings)
-    state["scene_prop"] = "edit_vertex_relax"
+    bpy.types.Scene.slide_relax = bpy.props.PointerProperty(type=properties_module.SR_Settings)
+    state["scene_prop"] = "slide_relax"
     state["tool_id"] = _tool_id
     state["owner_id"] = __package__
     # host.unregister_tool は reload 後に差し替わるため、登録時点の関数を保持する。
@@ -73,7 +73,7 @@ def register() -> None:
         host.ToolSpec(
             tool_id=_tool_id,
             owner_id=__package__,
-            display_name="Selected Vertex Relax",
+            display_name="Slide Relax",
             group_id="mesh_utility",
             group_label="Mesh Utility",
             sort_order=100,

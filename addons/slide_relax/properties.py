@@ -3,7 +3,7 @@ from __future__ import annotations
 import bpy
 
 
-class EVR_Settings(bpy.types.PropertyGroup):
+class SR_Settings(bpy.types.PropertyGroup):
     # サイドバーの折りたたみ状態。ツール UI の開閉アイコンと連動する。
     expanded: bpy.props.BoolProperty(default=True)
     preserve_boundaries: bpy.props.BoolProperty(
