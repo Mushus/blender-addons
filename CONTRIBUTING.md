@@ -104,12 +104,13 @@ flowchart LR
   main["main へマージ"] --> ci["CI 成功"]
   ci --> draft["Draft Release 作成"]
   draft["CI 成功コミットの Draft Release"] --> publish["Release を publish"]
-  publish --> pages["GitHub Pages を公開"]
+  publish --> pagesBuild["Docs build"] --> pagesDeploy["GitHub Pages を公開"]
   recover["Draft Release を Run workflow + regenerate"] --> draft
+  retry["失敗 job を Re-run"] --> pagesBuild
 ```
 
 - 通常: CI 成功後に Draft が作られる。同日の Release が既に publish 済みなら翌日送り。
 - リカバリ (Draft): Actions の **Draft Release** を `regenerate=true` で手動実行 → Release 削除 + タグを HEAD へ force-push + Draft 再作成 → 再度 publish。
-- リカバリ (Docs のみ): Actions の **Deploy Documentation Site to GitHub Pages** を `main` で Run workflow し、`release_tag` に対象タグを指定する。`release` イベント自体はタグ側の古い workflow 定義を使うため、Docs の Node / pnpm 修正は default branch からの dispatch で適用する。
+- リカバリ (Docs): build / deploy が失敗した workflow run で **Re-run failed jobs** を実行する。イベント自体が起動しなかった場合のみ、Actions の **Deploy Documentation Site to GitHub Pages** を `main` で Run workflow し、`release_tag` に対象タグを指定する。
 
 ダウンロード一覧は `site` の Astro 起動時に、公開済み Release の manifest から ZIP URL を生成する。Release を publish するまで、サイトは更新されない。
