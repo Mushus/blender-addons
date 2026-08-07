@@ -20,7 +20,7 @@ jobs:
         run: docker run --rm --volume "${{ github.workspace }}:/workspace" --workdir /workspace blender-addon-tools:blender-${{ matrix.blender-version }} python ./scripts/run_ci.py
       - name: Upload UI artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ui-artifacts-blender-${{ matrix.blender-version }}
           path: artifacts/
