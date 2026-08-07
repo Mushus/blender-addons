@@ -3,8 +3,12 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import sys
 import zipfile
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from zip_utils import iter_files
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
@@ -29,9 +33,7 @@ def _zip_directory(source_dir: Path, zip_path: Path) -> None:
     if zip_path.exists():
         zip_path.unlink()
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        for path in sorted(source_dir.rglob("*")):
-            if path.is_dir():
-                continue
+        for path in iter_files(source_dir):
             archive.write(path, path.relative_to(source_dir.parent).as_posix())
 
 
@@ -63,10 +65,15 @@ def make_zips(
         suite_dir = BUILD / suite_id
         (suite_dir / "addons").mkdir(parents=True)
         shutil.copy2(ROOT / "__init__.py", suite_dir / "__init__.py")
+        shutil.copy2(PACKAGES_JSON, suite_dir / "packages.json")
         shutil.copy2(ROOT / "addons" / "__init__.py", suite_dir / "addons" / "__init__.py")
         for package in suite_selected:
             source = ROOT / package["source"]
-            shutil.copytree(source, suite_dir / "addons" / Path(package["source"]).name)
+            shutil.copytree(
+                source,
+                suite_dir / "addons" / Path(package["source"]).name,
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo", ".DS_Store", "Thumbs.db"),
+            )
         zip_path = DIST / f"{suite_id}.zip"
         _zip_directory(suite_dir, zip_path)
         created.append(zip_path)
@@ -74,7 +81,11 @@ def make_zips(
     for package in selected:
         package_id = package["id"]
         package_dir = BUILD / package_id
-        shutil.copytree(ROOT / package["source"], package_dir)
+        shutil.copytree(
+            ROOT / package["source"],
+            package_dir,
+            ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo", ".DS_Store", "Thumbs.db"),
+        )
         zip_path = DIST / f"{package_id}.zip"
         _zip_directory(package_dir, zip_path)
         created.append(zip_path)

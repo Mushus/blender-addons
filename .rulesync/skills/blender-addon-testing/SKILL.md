@@ -30,10 +30,10 @@ uv run run-docker --exec -- python ./scripts/run_gui_smokes.py
 
 ## 新規ツール追加時の契約
 
-1. `release/packages.json` に追加する。
+1. `release/packages.json` に追加する（suite の子一覧・ZIP レイアウト・ライフサイクル smoke はここから導出）。
 2. `scripts/<id>_smoke_test.py` を追加する（`release/packages.json` の stable パッケージと 1:1 対応必須）。
 3. 必要に応じて `scripts/<id>_ui_smoke_test.py` を追加する。
-4. `scripts/blender_smoke_test.py` の runtime-key マップとクリーンアップ検証を追加する。
+4. runtime key は `{id}.runtime.v1` 規約に従う（`blender_smoke_test.py` への手書き追加は不要）。
 
 ## 開発・記述ルール
 
