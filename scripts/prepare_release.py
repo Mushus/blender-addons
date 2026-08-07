@@ -65,6 +65,13 @@ def parse_package_version(source_dir: str) -> str:
     return f"{parts[0]:04d}.{parts[1]:02d}.{parts[2]:02d}"
 
 
+def force_push_tag(tag_name: str, target_sha: str) -> None:
+    """Move tag to target_sha and force-push to origin (CI recovery path)."""
+    run_command(["git", "tag", "-f", tag_name, target_sha])
+    run_command(["git", "push", "--force", "origin", f"refs/tags/{tag_name}"])
+    print(f"Force-pushed tag {tag_name} -> {target_sha}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Prepare draft release assets and upload to GitHub.")
     parser.add_argument("--no-draft", action="store_true", help="Skip GitHub release draft creation/upload.")
@@ -73,7 +80,7 @@ def main() -> None:
     parser.add_argument(
         "--regenerate",
         action="store_true",
-        help="Delete today's existing release/tag and recreate a draft from HEAD (recovery path).",
+        help="Delete today's release, force-push the tag to HEAD, and recreate a draft (recovery path).",
     )
     args = parser.parse_args()
 
@@ -231,25 +238,45 @@ def main() -> None:
             print("Re-run with --regenerate to replace it with a new draft.")
             sys.exit(0)
 
-        # Drop the existing release (published or draft) so the new draft
-        # retargets HEAD and a later publish can re-fire GitHub Pages deploy.
-        if args.regenerate and existing_is_draft is not None:
-            print(f"Regenerating: deleting existing release {tag_name}")
+        release_target = run_command(["git", "rev-parse", "HEAD"])
+        assets = [str(p) for p in release_dir.iterdir() if p.is_file()]
+
+        if args.regenerate:
+            # Drop the GitHub Release object, then force-move the git tag to HEAD
+            # so a later publish runs workflow YAML from the retargeted commit.
+            if existing_is_draft is not None:
+                print(f"Regenerating: deleting existing release {tag_name}")
+                subprocess.run(
+                    [gh_bin, "release", "delete", tag_name, "--yes"],
+                    cwd=PROJECT_ROOT,
+                    check=True,
+                    env=env,
+                )
+            print(f"Regenerating: force-pushing tag {tag_name} -> {release_target}")
+            force_push_tag(tag_name, release_target)
             subprocess.run(
-                [gh_bin, "release", "delete", tag_name, "--yes", "--cleanup-tag"],
+                [
+                    gh_bin,
+                    "release",
+                    "create",
+                    tag_name,
+                    "--draft",
+                    "--target",
+                    release_target,
+                    "--title",
+                    tag_name,
+                    "--notes-file",
+                    str(body_path),
+                    *assets,
+                ],
                 cwd=PROJECT_ROOT,
                 check=True,
                 env=env,
             )
-            existing_is_draft = None
-
-        assets = [str(p) for p in release_dir.iterdir() if p.is_file()]
-
-        if existing_is_draft == "true":
+        elif existing_is_draft == "true":
             subprocess.run([gh_bin, "release", "upload", tag_name, *assets, "--clobber"], cwd=PROJECT_ROOT, check=True, env=env)
             subprocess.run([gh_bin, "release", "edit", tag_name, "--title", tag_name, "--notes-file", str(body_path)], cwd=PROJECT_ROOT, check=True, env=env)
         else:
-            release_target = run_command(["git", "rev-parse", "HEAD"])
             subprocess.run(
                 [
                     gh_bin,

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       regenerate:
-        description: "Delete today's release/tag and recreate as draft (recovery)"
+        description: "Delete today's release, force-push tag to HEAD, recreate draft"
         type: boolean
         default: false
 
@@ -27,6 +27,8 @@ jobs:
           # workflow_run: CI success commit. workflow_dispatch: selected branch tip.
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
+          # Needed for prepare_release.py --regenerate (git tag -f + push --force).
+          persist-credentials: true
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
