@@ -2,14 +2,35 @@
   "packages": [
     {
       "id": "uv_island_mask",
-      "version": "2026.08.04",
+      "name": "UV Island Mask",
       "group_id": "uv_utility",
       "group_label": "UV Utility",
+      "version": "2026.08.04",
       "blender_target": "5.1",
-      "changed": true,
-      "file": "uv_island_mask-2026.08.04-blender5.1.zip",
       "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.03/uv_island_mask-2026.08.04-blender5.1.zip",
-      "doc_link": "/addons/uv-island-mask/"
+      "doc_link": "/addons/uv-island-mask/",
+      "changed": true,
+      "file": "uv_island_mask-2026.08.04-blender5.1.zip"
+    },
+    {
+      "id": "in_between_shape_key",
+      "name": "In Between Shape Key",
+      "group_id": "in_between_shape_key",
+      "group_label": "In Between Shape Key",
+      "version": "2026.8.6",
+      "blender_target": "5.1.0",
+      "url": null,
+      "doc_link": "/addons/in-between-shape-key/"
+    },
+    {
+      "id": "slide_relax",
+      "name": "Slide Relax",
+      "group_id": "mesh_utility",
+      "group_label": "Mesh Utility",
+      "version": "2026.8.7",
+      "blender_target": "5.1.0",
+      "url": null,
+      "doc_link": "/addons/slide-relax/"
     }
   ],
   "suite": {

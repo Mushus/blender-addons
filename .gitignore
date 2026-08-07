@@ -1,7 +1,8 @@
 build/
 dist/
 artifacts/
-site/_generated/
+site/.astro/
+site/dist/
 .blender-cache/
 *.zip
 __pycache__/

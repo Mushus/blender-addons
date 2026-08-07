@@ -1,10 +1,12 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import generatePackages from './integrations/generate-packages.mjs';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://mushus.github.io/blender-addons',
   integrations: [
+    generatePackages(),
     starlight({
       title: 'Blender Add-ons',
       defaultLocale: 'root',
