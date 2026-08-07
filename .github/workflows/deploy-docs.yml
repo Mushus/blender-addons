@@ -7,11 +7,6 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      release_tag:
-        description: "Release tag to build (site content + packages index)"
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -25,5 +20,3 @@ concurrency:
 jobs:
   deploy-docs:
     uses: Mushus/blender-addons/.github/workflows/deploy-docs-reusable.yml@main
-    with:
-      release_tag: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.release_tag }}
