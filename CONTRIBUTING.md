@@ -76,7 +76,7 @@ CI と同じ一括検証は Docker を使用します。
 uv run run-docker --build --exec -- python ./scripts/run_ci.py
 ```
 
-Blender のランタイムテストは、埋め込み Blender MCP セッションではなく、Blender の `--background` モードまたは Docker 内で実行してください。詳細は [`docs/testing.md`](docs/testing.md) を参照してください。
+Blender のランタイムテストは、埋め込み Blender MCP セッションではなく、Blender の `--background` モードまたは Docker 内で実行してください。詳細は [`blender-addon-testing`](.agents/skills/blender-addon-testing/SKILL.md) を参照してください。
 
 ## ブランチと変更の流れ
 
@@ -91,7 +91,7 @@ Blender のランタイムテストは、埋め込み Blender MCP セッショ�
 1. `release/packages.json` にパッケージ情報を追加する
 2. `scripts/<id>_smoke_test.py` に background smoke test を追加する
 3. 必要に応じて `scripts/<id>_ui_smoke_test.py` を追加する
-4. [`docs/reload-safe-runtime.md`](docs/reload-safe-runtime.md) と [`docs/testing.md`](docs/testing.md) の契約に従って、再読み込み時の後始末を実装する
+4. [`blender-addon-coding-rules`](.agents/skills/blender-addon-coding-rules/SKILL.md) と [`blender-addon-testing`](.agents/skills/blender-addon-testing/SKILL.md) の契約に従って、再読み込み時の後始末を実装する
 
 ## パッケージとリリース
 
