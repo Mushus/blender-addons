@@ -58,9 +58,16 @@ def get_local_fallback_packages(repo_url: str) -> tuple[dict[str, dict], dict | 
     return latest, None
 
 
+def get_package_ids() -> set[str]:
+    packages_path = Path(__file__).resolve().parent.parent / "release" / "packages.json"
+    packages = json.loads(packages_path.read_text(encoding="utf-8"))
+    return {package["id"] for package in packages["packages"]}
+
+
 def main():
     repository = os.environ.get("GITHUB_REPOSITORY", "Mushus/blender-addons")
     repo_url = f"https://github.com/{repository}"
+    package_ids = get_package_ids()
     latest = {}
     suite = None
 
@@ -80,7 +87,7 @@ def main():
                             ),
                         }
                     for package in manifest.get("packages", []):
-                        if package.get("file") and package["id"] not in latest:
+                        if package["id"] in package_ids and package.get("file") and package["id"] not in latest:
                             asset_url = next(
                                 (item["browser_download_url"] for item in release["assets"] if item["name"] == package["file"]), None
                             )
@@ -95,6 +102,8 @@ def main():
 
     if not latest:
         latest, suite = get_local_fallback_packages(repo_url)
+
+    latest = {package_id: package for package_id, package in latest.items() if package_id in package_ids}
 
     data = {
         "packages": list(latest.values()),
