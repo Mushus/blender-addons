@@ -1,0 +1,19 @@
+{
+  "packages": [
+    {
+      "id": "uv_island_mask",
+      "version": "2026.08.04",
+      "group_id": "uv_utility",
+      "group_label": "UV Utility",
+      "blender_target": "5.1",
+      "changed": true,
+      "file": "uv_island_mask-2026.08.04-blender5.1.zip",
+      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.03/uv_island_mask-2026.08.04-blender5.1.zip",
+      "doc_link": "/addons/uv-island-mask/"
+    }
+  ],
+  "suite": {
+    "version": "2026-08-03T21:34:17",
+    "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.03/blender_addon_suite-2026.08.03-blender5.1.zip"
+  }
+}

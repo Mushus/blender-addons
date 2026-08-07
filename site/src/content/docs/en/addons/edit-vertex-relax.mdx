@@ -1,0 +1,40 @@
+---
+title: Edit Vertex Relax
+description: Smoothly relax vertex distribution while preserving mesh surface shape in Edit Mode.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="Blender 4.0+" /> <Badge text="Mesh Tool" />
+
+<div style="margin: 1.5rem 0;">
+  <a href="https://github.com/Mushus/blender-addons/releases/latest/download/edit_vertex_relax.zip" class="download-btn">
+    Download Edit Vertex Relax (.zip)
+  </a>
+</div>
+
+## Overview
+
+**Edit Vertex Relax** is a mesh editing tool that smoothly relaxes and evens out vertex spacing while retaining the overall surface volume and shape during Edit Mode. Excellent for retopology and organic modeling.
+
+---
+
+## UI Location
+
+- 3D Viewport > Edit Mode > Mesh Menu, or Sidebar (`N` key) under the `Edit` tab.
+
+---
+
+## Features & Usage
+
+1. Select vertices, edges, or faces in Edit Mode.
+2. Open the context menu (Right Click) in the 3D Viewport or click **Vertex Relax** in the Sidebar panel.
+3. Adjust iteration count and smoothing factor in the Operator panel at the bottom left.
+
+### Parameters
+
+| Parameter | Description |
+| :--- | :--- |
+| **Iterations** | Number of relaxation passes (higher values yield more uniform distribution) |
+| **Factor** | Smoothing strength factor (0.0 to 1.0) |
+| **Keep Boundary** | Pins boundary vertices in place while relaxing interior vertices |

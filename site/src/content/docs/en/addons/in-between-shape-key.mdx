@@ -1,0 +1,39 @@
+---
+title: In-Between Shape Key
+description: Generate and interpolate in-between shapes between existing shape keys.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="Blender 4.0+" /> <Badge text="Animation / Rigging" />
+
+<div style="margin: 1.5rem 0;">
+  <a href="https://github.com/Mushus/blender-addons/releases/latest/download/in_between_shape_key.zip" class="download-btn">
+    Download In-Between Shape Key (.zip)
+  </a>
+</div>
+
+## Overview
+
+**In-Between Shape Key** helps riggers and animators create intermediate shape keys (in-betweens) automatically by interpolating between base and target shape keys.
+
+---
+
+## UI Location
+
+- Properties Editor > **Object Data Properties** (green triangle icon) > **Shape Keys** panel specials menu.
+
+---
+
+## Features & Usage
+
+1. Prepare a base shape key and a target shape key.
+2. Open the specials dropdown menu in the Shape Keys panel and select **Create In-Between Shape Key**.
+3. Set the desired blend factor to generate the new shape key.
+
+### Parameters
+
+| Parameter | Description |
+| :--- | :--- |
+| **Blend Factor** | Interpolation ratio (e.g., 0.5 creates a 50% midpoint shape) |
+| **Target Key** | The target shape key to blend towards |

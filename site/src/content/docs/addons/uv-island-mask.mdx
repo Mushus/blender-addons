@@ -1,0 +1,37 @@
+---
+title: UV Island Mask
+description: UVアイランド単位で選択範囲や頂点グループマスクを生成するUVペイント補助ツール
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="Blender 4.0+" /> <Badge text="UV / Texture Paint" />
+
+<div style="margin: 1.5rem 0;">
+  <a href="https://github.com/Mushus/blender-addons/releases/latest/download/uv_island_mask.zip" class="download-btn">
+    UV Island Mask (.zip) をダウンロード
+  </a>
+</div>
+
+## 概要
+
+**UV Island Mask** は、UV展開されたアイランド構造をもとに、メッシュ選択範囲や頂点グループマスクをワンクリックで生成するアドオンです。テクスチャペイント時のマスク指定やマテリアル分けに役立ちます。
+
+---
+
+## UIの配置場所
+
+- **UV エディタ** > 選択 (Select) メニュー
+- 3D ビューポート > **テクスチャペイントモード** > サイドバー (`N` キー)
+
+---
+
+## 主な機能と使い方
+
+1. テクスチャペイントまたはメッシュ編集時に、目的の UV アイランド上の要素を選択します。
+2. **Mask by UV Island** を実行すると、選択要素が含まれる UV アイランド全体がマスク範囲として自動抽出されます。
+
+### 主な特徴
+
+- 単一クリックで複雑なシーム境界を認識
+- 頂点グループへのマスク領域の自動割り当て機能

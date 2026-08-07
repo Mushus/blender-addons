@@ -1,0 +1,80 @@
+---
+import packagesData from '../data/packages.json';
+
+interface Props {
+  lang?: 'ja' | 'en';
+}
+
+const { lang = 'ja' } = Astro.props;
+
+const isJa = lang === 'ja';
+const labels = {
+  suiteTitle: isJa ? 'アドオン一括パッケージ (Suite)' : 'Complete Add-on Suite',
+  suiteDesc: isJa ? '収録中のすべての最新アドオンをまとめてダウンロードできます。' : 'Download all latest included add-ons in a single zip archive.',
+  suiteDownload: isJa ? 'Suite ZIP をダウンロード' : 'Download Suite ZIP',
+  group: isJa ? 'グループ' : 'Group',
+  tool: isJa ? 'ツール' : 'Tool',
+  version: isJa ? 'バージョン' : 'Version',
+  target: isJa ? '対応Blender' : 'Target Blender',
+  download: isJa ? 'ZIPをダウンロード' : 'Download ZIP',
+  noData: isJa ? '利用可能なダウンロード情報がありません。' : 'No download info available.',
+};
+
+const packages = packagesData.packages || [];
+const suite = packagesData.suite;
+---
+
+{suite && suite.url && (
+  <p>
+    <strong>{labels.suiteTitle}:</strong> {labels.suiteDesc}{' '}
+    <a href={suite.url}>{labels.suiteDownload}</a>
+  </p>
+)}
+
+{packages.length > 0 ? (
+  <table>
+    <thead>
+      <tr>
+        <th>{labels.group}</th>
+        <th>{labels.tool}</th>
+        <th>{labels.version}</th>
+        <th>{labels.target}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {packages.map((pkg) => (
+        <tr>
+          <td>{pkg.group_label || pkg.group_id}</td>
+          <td>
+            {pkg.doc_link ? (
+              <a href={isJa ? pkg.doc_link : `/en${pkg.doc_link}`}>{pkg.name || pkg.id}</a>
+            ) : (
+              pkg.name || pkg.id
+            )}
+          </td>
+          <td>{pkg.version}</td>
+          <td>Blender {pkg.blender_target}</td>
+          <td>
+            {pkg.url ? (
+              <a href={pkg.url}>{labels.download}</a>
+            ) : (
+              '-'
+            )}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+) : (
+  <p>{labels.noData}</p>
+)}
+
+<style>
+  table {
+    width: auto;
+    display: table;
+  }
+</style>
+
+

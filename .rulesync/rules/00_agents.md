@@ -5,7 +5,8 @@ root: true
 ---
 # Project
 
-このプロジェクトはまだリリースされていないものとみなし、互換性を気にするべきではない
+Blender アドオン集約リポジトリ。未リリース扱いのため互換性は気にしない。
+`main` はリリース可能なツールのみ。開発は `work` / `feature/<tool>-<topic>`。
 
 # Docs
 
@@ -14,15 +15,30 @@ Document: ./docs/index.md
 * 図(mermaid, svg)を多用する
 * 考えればわかることを記述しない
 
-# Workflow
-1. Modify Code
-2. Pre-compile & Static Analysis
-   - コンパイルエラー/警告が発生した場合: コードを修正して手順2へ戻る
+# Rules
 
-* 仕様にないフォールバックは禁止されています。エラーによって即時中断するのが好ましい
-* 常にロバストなアルゴリズムを使用する
-* Linuxカーネルのコードのようにコメントを必要十分記述する
-* 気づいたことがあれば、ユーザーに報告すること
+- `C:\Users\wyndf\Documents\blender-addon` は参照用。変更しない
+- ツール版の正は `addons/<tool>/__init__.py` の `bl_info["version"]`
+- パッケージ: `scripts/make_zip.py`（`uv run make-zip`）
+- リリース検証: `scripts/prepare_release.py`（`uv run prepare-release`）
+- Blender ランタイムテストは background モード。埋め込み Blender MCP では実行しない
+- テスト手順: [`docs/testing.md`](docs/testing.md)。全自動は Docker（`scripts/run_ci.py`）
+- 新規・更新ツールは [`docs/reload-safe-runtime.md`](docs/reload-safe-runtime.md) に従う（`runtime.py` + durable な `driver_namespace` uninstall）。`unregister()` をモジュールグローバルに依存させない
+
+# Workflow
+
+```
+let code;
+do {
+  code = coding()
+} while(test(code));
+generateZip();
+```
+
+* 仕様にないフォールバックは禁止。エラーで即時中断を優先
+* 常にロバストなアルゴリズムを使う
+* コメントは必要十分に（Linux カーネル流）
+* 気づいたことはユーザーに報告する
 
 # Directory
 
@@ -30,5 +46,5 @@ Document: ./docs/index.md
 
 # testing
 
-- テストケース毎に「背景情報」「なぜやるか」を記載してください。
-- 互換層を維持することは技術負債を増やすことになるため、互換層を維持しない。移行期間を設けない。移行まで責任を持ってやり切る。
+- テストケース毎に「背景情報」「なぜやるか」を記載する
+- 互換層は維持しない。移行期間を設けず、移行までやり切る

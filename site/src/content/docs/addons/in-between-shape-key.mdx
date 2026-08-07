@@ -1,0 +1,39 @@
+---
+title: In-Between Shape Key
+description: 既存のシェイプキー間に中間シェイプ（インビトウィーン）を生成・補間するアドオン
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="Blender 4.0+" /> <Badge text="Animation / Rigging" />
+
+<div style="margin: 1.5rem 0;">
+  <a href="https://github.com/Mushus/blender-addons/releases/latest/download/in_between_shape_key.zip" class="download-btn">
+    In-Between Shape Key (.zip) をダウンロード
+  </a>
+</div>
+
+## 概要
+
+**In-Between Shape Key** は、キャラクターの表情作成やモーフターゲットアニメーションにおいて、複数のシェイプキーの中間状態（In-between）を自動補間・作成するツールです。
+
+---
+
+## UIの配置場所
+
+プロパティエディタ > **オブジェクトデータプロパティ** (緑色の三角アイコン) > **シェイプキー (Shape Keys)** パネル内の特殊メニューに統合されます。
+
+---
+
+## 主な機能と使い方
+
+1. ベースとなるシェイプキーとターゲットとなるシェイプキーを作成します。
+2. シェイプキーパネルのドロップダウンメニューから **Create In-Between Shape Key** を選択します。
+3. 補間比率 (Factor) を指定して新しい中間キーを出力します。
+
+### 主なパラメータ
+
+| パラメータ | 説明 |
+| :--- | :--- |
+| **Blend Factor** | 補間の中間割合（例: 0.5 でちょうど中間のシェイプを生成） |
+| **Target Key** | ブレンド対象とするターゲットシェイプキー |
