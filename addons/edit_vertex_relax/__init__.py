@@ -7,7 +7,7 @@ import bpy
 
 bl_info = {
     "name": "Edit Mode Selected Vertex Relax",
-    "author": "Blender Add-on Tools",
+    "author": "Mushus",
     "version": (2026, 8, 7),
     "blender": (5, 1, 0),
     "location": "3D View > Sidebar > Edit",

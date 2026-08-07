@@ -1,15 +1,42 @@
-# Blender Add-on Tools
+# Blender Add-ons
 
-Blender向けの小規模アドオンツール群。
+3D モデリングやセットアップ作業を速くする、Blender 向けアドオン集です。
 
-## Downloads
+各アドオンは個別の ZIP としてインストールできます。まとめて入れる Suite パッケージも用意しています。
 
-- 🌐 **[Download Page (English)](https://mushus.github.io/blender-addons/)**
-- 🌐 **[Download Page (Japanese)](https://mushus.github.io/blender-addons/ja/)**
+## ダウンロード
 
-## Tools
+- [ダウンロード一覧（日本語）](https://mushus.github.io/blender-addons/downloads/)
+- [Download list (English)](https://mushus.github.io/blender-addons/en/downloads/)
+- [GitHub Releases](https://github.com/Mushus/blender-addons/releases/latest)
 
-| Add-on | Description |
+## アドオン一覧
+
+| アドオン | できること |
 | :--- | :--- |
-| **UV Island Mask** | 選択中UV面からマスク画像を生成（複数メッシュ・解像度・マージン指定等） |
-| **In Between Shape Key** | `Name@Weight` 形式のシェイプキーをFBXインビトウィーンブレンドシェイプとして出力 |
+| [**UV Island Mask**](https://mushus.github.io/blender-addons/addons/uv-island-mask/) | 選択した UV 面からマスク画像を生成します |
+| [**In Between Shape Key**](https://mushus.github.io/blender-addons/addons/in-between-shape-key/) | `Name@Weight` 形式のシェイプキーを FBX のインビトウィーンとして書き出します |
+| [**Edit Vertex Relax**](https://mushus.github.io/blender-addons/addons/edit-vertex-relax/) | 編集モードで形状を保ちながら、選択頂点の配置を滑らかにします |
+
+## インストール
+
+1. 上記から目的のアドオン ZIP をダウンロードします（**解凍しないでください**）
+2. Blender で **編集 > プリファレンス > アドオン** を開きます
+3. **インストール...** から ZIP を選びます
+4. 一覧でアドオンにチェックを入れて有効化します
+
+更新時は、古い版を **削除** してから新しい ZIP を入れ直してください。
+
+詳しい手順・トラブル対処はドキュメントを参照してください。
+
+- [インストール方法](https://mushus.github.io/blender-addons/guides/installation/)
+- [FAQ](https://mushus.github.io/blender-addons/guides/faq/)
+
+## ドキュメント
+
+- [日本語](https://mushus.github.io/blender-addons/)
+- [English](https://mushus.github.io/blender-addons/en/)
+
+## 開発者向け
+
+環境構築・検証・ブランチ運用は [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。

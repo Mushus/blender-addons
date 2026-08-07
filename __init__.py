@@ -1,10 +1,10 @@
 bl_info = {
     "name": "Blender Add-on Tools Suite",
-    "author": "Your Name",
-    "version": (2026, 8, 4),
-    "blender": (4, 0, 0),
-    "location": "UV Editor > Sidebar > Edit",
-    "description": "Stable, independently installable Blender tools.",
+    "author": "Mushus",
+    "version": (2026, 8, 7),
+    "blender": (5, 1, 0),
+    "location": "UV Editor > Sidebar > Edit; 3D View > Sidebar > Edit; Properties > Data > Shape Keys; File > Export > FBX (.fbx)",
+    "description": "UV Island Mask, Edit Mode Selected Vertex Relax, and In Between Shape Key.",
     "category": "3D View",
 }
 

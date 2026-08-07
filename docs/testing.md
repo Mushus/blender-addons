@@ -13,6 +13,7 @@ Blender アドオンは Playwright 相当の安定 UI セレクタを持たな�
 | 機能 smoke | `bpy.ops` / RNA / 出力物 | Docker `--background` |
 | UI draw（擬似） | パネルが何を描くか | background 内のフェイクレイアウト |
 | GUI smoke | 仮想ウィンドウでの操作・スクショ | Docker + Xvfb + `--enable-event-simulate` |
+| Docs スクショ | ドキュメント用 PNG | Docker + Xvfb（CI 外。[`doc-screenshots.md`](doc-screenshots.md)） |
 
 ## 実行
 
@@ -22,12 +23,20 @@ CI / ローカルとも `scripts/run_ci.py` が静的 → ZIP → background →
 uv run run-docker --build --exec -- python ./scripts/run_ci.py
 ```
 
+ドキュメント用スクショ（CI には含めない）:
+
+```bash
+uv run run-docker --exec -- python ./scripts/make_zip.py
+uv run run-docker --exec -- python ./scripts/run_doc_screenshots.py
+```
+
 発見:
 
 | ランナー | 対象 |
 |----------|------|
 | `run_background_smokes.py` | `release/packages.json` の stable + suite ライフサイクル、`scripts/<id>_smoke_test.py` |
 | `run_gui_smokes.py` | `scripts/<id>_ui_smoke_test.py`（`xvfb-run` + SoftGL） |
+| `run_doc_screenshots.py` | `scripts/<id>_doc_screenshot.py`（`xvfb-run` + SoftGL） |
 
 契約: stable パッケージには必ず `scripts/<id>_smoke_test.py` がある。逆に、その命名の smoke は packages.json に無いと失敗する。
 

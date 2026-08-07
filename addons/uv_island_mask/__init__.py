@@ -1,6 +1,6 @@
 bl_info = {
     "name": "UV Island Mask",
-    "author": "Your Name",
+    "author": "Mushus",
     "version": (2026, 8, 4),
     "blender": (4, 0, 0),
     "location": "UV Editor > Sidebar > Edit",

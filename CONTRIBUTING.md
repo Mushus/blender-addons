@@ -1,6 +1,7 @@
 # Contributing
 
-このリポジトリへの変更方法と、ローカル環境の構築・検証手順です。
+このリポジトリへの変更方法と、ローカル環境の構築・検証手順です。  
+エンドユーザー向けの紹介・ダウンロード・インストールは [README.md](README.md) を参照してください。
 
 ## 開発環境
 
@@ -90,5 +91,10 @@ Blender のランタイムテストは、埋め込み Blender MCP セッショ�
 1. `release/packages.json` にパッケージ情報を追加する
 2. `scripts/<id>_smoke_test.py` に background smoke test を追加する
 3. 必要に応じて `scripts/<id>_ui_smoke_test.py` を追加する
-4. `docs/testing.md` の契約に従って、再読み込み時の後始末を実装する
+4. [`docs/reload-safe-runtime.md`](docs/reload-safe-runtime.md) と [`docs/testing.md`](docs/testing.md) の契約に従って、再読み込み時の後始末を実装する
 
+## パッケージとリリース
+
+- ZIP 生成: `uv run make-zip`（`scripts/make_zip.py`）
+- リリース検証: `uv run prepare-release`（`scripts/prepare_release.py`）
+- ツール版の正は `addons/<tool>/__init__.py` の `bl_info["version"]`

@@ -48,4 +48,5 @@ make-zip = "scripts.make_zip:main"
 prepare-release = "scripts.prepare_release:main"
 run-docker = "scripts.run_blender_docker:main"
 install-blender = "scripts.install_blender:main"
+doc-screenshots = "scripts.run_doc_screenshots:main"
 

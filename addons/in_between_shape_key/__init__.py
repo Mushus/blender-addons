@@ -9,7 +9,7 @@ from . import runtime
 
 bl_info = {
     "name": "In Between Shape Key",
-    "author": "Blender Add-on Tools",
+    "author": "Mushus",
     "version": (2026, 8, 6),
     "blender": (5, 1, 0),
     "location": "Properties > Data > Shape Keys; File > Export > FBX (.fbx)",
