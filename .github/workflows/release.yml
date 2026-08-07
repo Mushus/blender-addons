@@ -4,18 +4,28 @@ on:
   workflow_run:
     workflows: [CI]
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      regenerate:
+        description: "Delete today's release/tag and recreate as draft (recovery)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
 jobs:
   draft:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          # workflow_run: CI success commit. workflow_dispatch: selected branch tip.
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -24,4 +34,9 @@ jobs:
       - name: Prepare Draft Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python ./scripts/prepare_release.py
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.regenerate }}" = "true" ]; then
+            python ./scripts/prepare_release.py --regenerate
+          else
+            python ./scripts/prepare_release.py
+          fi

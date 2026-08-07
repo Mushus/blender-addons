@@ -70,6 +70,11 @@ def main() -> None:
     parser.add_argument("--no-draft", action="store_true", help="Skip GitHub release draft creation/upload.")
     parser.add_argument("--tag-name", default="", help="Tag name for release (default: release-YYYY.MM.DD).")
     parser.add_argument("--blender-target", default="", help="Blender target version suffix.")
+    parser.add_argument(
+        "--regenerate",
+        action="store_true",
+        help="Delete today's existing release/tag and recreate a draft from HEAD (recovery path).",
+    )
     args = parser.parse_args()
 
     catalog_path = PROJECT_ROOT / "release" / "packages.json"
@@ -117,7 +122,12 @@ def main() -> None:
         f == "__init__.py" or f.startswith("scripts/") for f in changed_files
     )
 
-    if not changed_ids and not suite_changed:
+    # Regenerating a same-day release must rebuild everything so Docs republish
+    # still works even when only CI/workflow files changed.
+    if args.regenerate:
+        changed_ids = list(all_ids)
+        suite_changed = True
+    elif not changed_ids and not suite_changed:
         print("No releasable package changes detected.")
         sys.exit(0)
 
@@ -216,9 +226,22 @@ def main() -> None:
         )
         existing_is_draft = res.stdout.strip() if res.returncode == 0 else None
 
-        if existing_is_draft == "false":
+        if existing_is_draft == "false" and not args.regenerate:
             print("Today's release is already published; deferring additional changes to the next day.")
+            print("Re-run with --regenerate to replace it with a new draft.")
             sys.exit(0)
+
+        # Drop the existing release (published or draft) so the new draft
+        # retargets HEAD and a later publish can re-fire GitHub Pages deploy.
+        if args.regenerate and existing_is_draft is not None:
+            print(f"Regenerating: deleting existing release {tag_name}")
+            subprocess.run(
+                [gh_bin, "release", "delete", tag_name, "--yes", "--cleanup-tag"],
+                cwd=PROJECT_ROOT,
+                check=True,
+                env=env,
+            )
+            existing_is_draft = None
 
         assets = [str(p) for p in release_dir.iterdir() if p.is_file()]
 

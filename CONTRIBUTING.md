@@ -105,6 +105,10 @@ flowchart LR
   ci --> draft["Draft Release 作成"]
   draft["CI 成功コミットの Draft Release"] --> publish["Release を publish"]
   publish --> pages["GitHub Pages を公開"]
+  recover["Draft Release を Run workflow + regenerate"] --> draft
 ```
+
+- 通常: CI 成功後に Draft が作られる。同日の Release が既に publish 済みなら翌日送り。
+- リカバリ: Actions の **Draft Release** を `regenerate=true` で手動実行 → 同日タグを消して Draft を作り直す → 再度 publish。
 
 ダウンロード一覧は `site` の Astro 起動時に、公開済み Release の manifest から ZIP URL を生成する。Release を publish するまで、サイトは更新されない。
