@@ -13,7 +13,7 @@ from importlib import import_module, reload
 
 import bpy
 
-_CHILDREN = ("uv_island_mask", "in_between_shape_key")
+_CHILDREN = ("uv_island_mask", "in_between_shape_key", "edit_vertex_relax")
 _RUNTIME_KEY = "blender_addon_suite.runtime.v1"
 
 

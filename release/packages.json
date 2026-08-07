@@ -15,6 +15,13 @@
       "status": "stable",
       "group_id": "in_between_shape_key",
       "group_label": "In Between Shape Key"
+    },
+    {
+      "id": "edit_vertex_relax",
+      "source": "addons/edit_vertex_relax",
+      "status": "stable",
+      "group_id": "mesh_utility",
+      "group_label": "Mesh Utility"
     }
   ]
 }

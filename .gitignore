@@ -11,6 +11,8 @@ __pycache__/
 .venv/
 venv/
 env/
+node_modules/
+.pnpm-store/
 *.blend1
 *.blend2
 *.blend@
@@ -20,3 +22,4 @@ env/
 .idea/
 .vscode/
 
+.agents/

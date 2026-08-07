@@ -1,0 +1,14 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
+  "targets": ["agentsskills"],
+  "features": ["skills"],
+  "outputRoots": ["."],
+  "delete": false,
+  "verbose": false,
+  "silent": false,
+  "global": false,
+  "simulateCommands": false,
+  "simulateSubagents": false,
+  "simulateSkills": false,
+  "gitignoreTargetsOnly": true
+}

@@ -14,6 +14,7 @@ from zip_utils import extract_zip
 RUNTIME_KEYS = {
     "uv_island_mask": "uv_island_mask.runtime.v1",
     "in_between_shape_key": "in_between_shape_key.runtime.v1",
+    "edit_vertex_relax": "edit_vertex_relax.runtime.v1",
     "blender_addon_suite": "blender_addon_suite.runtime.v1",
 }
 HOST_KEY = "blender_addon_tools.embedded_host.v1"
@@ -50,7 +51,12 @@ def _assert_clean(module_name: str, baseline_handlers: dict[str, int]) -> None:
     elif module_name == "uv_island_mask":
         if hasattr(bpy.types.Scene, "uv_island_mask"):
             raise AssertionError("Scene.uv_island_mask still registered")
+    elif module_name == "edit_vertex_relax":
+        if hasattr(bpy.types.Scene, "edit_vertex_relax"):
+            raise AssertionError("Scene.edit_vertex_relax still registered")
     elif module_name == "blender_addon_suite":
+        if hasattr(bpy.types.Scene, "edit_vertex_relax"):
+            raise AssertionError("Selected Vertex Relax property leaked from suite")
         if hasattr(bpy.types, "FBXI_PT_shape_key_inbetween"):
             raise AssertionError("In Between Shape Key panel leaked from suite")
 

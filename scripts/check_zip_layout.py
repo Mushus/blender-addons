@@ -15,6 +15,13 @@ def main() -> None:
             "uv_island_mask/tool_manifest.json",
         },
         "in_between_shape_key": {"in_between_shape_key/__init__.py", "in_between_shape_key/runtime.py", "in_between_shape_key/postprocess.py"},
+        "edit_vertex_relax": {
+            "edit_vertex_relax/__init__.py",
+            "edit_vertex_relax/operator.py",
+            "edit_vertex_relax/runtime.py",
+            "edit_vertex_relax/embedded_host/registry.py",
+            "edit_vertex_relax/tool_manifest.json",
+        },
     }
     for package_id, required in package_zips.items():
         path = dist / f"{package_id}.zip"
@@ -37,13 +44,16 @@ def main() -> None:
             "blender_addon_suite/addons/uv_island_mask/runtime.py",
             "blender_addon_suite/addons/in_between_shape_key/__init__.py",
             "blender_addon_suite/addons/in_between_shape_key/runtime.py",
+            "blender_addon_suite/addons/edit_vertex_relax/__init__.py",
+            "blender_addon_suite/addons/edit_vertex_relax/runtime.py",
+            "blender_addon_suite/addons/edit_vertex_relax/embedded_host/registry.py",
         }
         missing = required_suite - names
         if missing:
             raise SystemExit(f"{suite_zip}: missing {sorted(missing)}")
 
     catalog = json.loads(Path("release/packages.json").read_text(encoding="utf-8"))
-    if [item["id"] for item in catalog["packages"]] != ["uv_island_mask", "in_between_shape_key"]:
+    if [item["id"] for item in catalog["packages"]] != ["uv_island_mask", "in_between_shape_key", "edit_vertex_relax"]:
         raise SystemExit("Unexpected stable package catalog")
     print("ZIP layout check passed")
 
