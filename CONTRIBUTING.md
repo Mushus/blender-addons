@@ -107,4 +107,4 @@ flowchart LR
   publish --> pages["GitHub Pages を公開"]
 ```
 
-ダウンロード一覧と各アドオンページは、公開済み Release の manifest から ZIP URL を生成する。Release を publish するまで、サイトは更新されない。
+ダウンロード一覧は `site` の Astro 起動時に、公開済み Release の manifest から ZIP URL を生成する。Release を publish するまで、サイトは更新されない。
