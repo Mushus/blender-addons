@@ -8,13 +8,35 @@ bl_info = {
     "category": "3D View",
 }
 
+import json
 import sys
 from importlib import import_module, reload
+from pathlib import Path
 
 import bpy
 
-_CHILDREN = ("uv_island_mask", "in_between_shape_key", "slide_relax")
 _RUNTIME_KEY = "blender_addon_suite.runtime.v1"
+
+
+def _load_children() -> tuple[str, ...]:
+    """Stable package ids from packages.json (suite zip) or release/packages.json (repo)."""
+    root = Path(__file__).resolve().parent
+    candidates = (root / "packages.json", root / "release" / "packages.json")
+    for path in candidates:
+        if not path.is_file():
+            continue
+        catalog = json.loads(path.read_text(encoding="utf-8"))
+        children = tuple(
+            package["id"]
+            for package in catalog["packages"]
+            if package.get("status") == "stable"
+        )
+        if not children:
+            raise RuntimeError(f"No stable packages in {path}")
+        return children
+    raise RuntimeError(
+        "packages.json not found next to suite __init__.py or under release/"
+    )
 
 
 def _runtime_state() -> dict | None:
@@ -32,7 +54,7 @@ def _clear_runtime() -> None:
 def register():
     unregister()
     modules = []
-    for name in _CHILDREN:
+    for name in _load_children():
         module_name = f"{__package__}.addons.{name}"
         module = sys.modules.get(module_name)
         if module is not None:
