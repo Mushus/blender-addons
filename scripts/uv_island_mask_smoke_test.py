@@ -4,10 +4,12 @@ import argparse
 import importlib
 import sys
 import tempfile
-import zipfile
 from pathlib import Path
 
 import bpy
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from zip_utils import extract_zip
 
 
 def parse_args():
@@ -62,8 +64,7 @@ def test_empty_image_editor_display():
 def main():
     options = parse_args()
     temp_dir = Path(tempfile.mkdtemp(prefix="blender-uv-mask-smoke-"))
-    with zipfile.ZipFile(Path(options.zip).resolve()) as archive:
-        archive.extractall(temp_dir)
+    extract_zip(Path(options.zip).resolve(), temp_dir)
     sys.path.insert(0, str(temp_dir))
 
     addon = importlib.import_module("uv_island_mask")

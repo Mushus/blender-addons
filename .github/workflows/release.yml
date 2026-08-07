@@ -11,14 +11,17 @@ permissions:
 jobs:
   draft:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
       - name: Prepare Draft Release
-        shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: .\scripts\prepare_release.ps1
+        run: python ./scripts/prepare_release.py

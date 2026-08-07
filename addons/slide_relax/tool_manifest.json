@@ -1,0 +1,11 @@
+{
+  "id": "slide_relax",
+  "display_name": "Slide Relax",
+  "group_id": "mesh_utility",
+  "group_label": "Mesh Utility",
+  "sort_order": 100,
+  "space_type": "VIEW_3D",
+  "region_type": "UI",
+  "category": "Edit",
+  "context_mode": "EDIT_MESH"
+}

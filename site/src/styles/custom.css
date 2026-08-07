@@ -1,0 +1,47 @@
+/* Starlight Custom Styles */
+:root {
+  --sl-color-accent-low: #1c2638;
+  --sl-color-accent: #3b82f6;
+  --sl-color-accent-high: #93c5fd;
+}
+
+:root[data-theme='light'] {
+  --sl-color-accent-low: #dbeafe;
+  --sl-color-accent: #2563eb;
+  --sl-color-accent-high: #1e40af;
+}
+
+/* Custom badge style */
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--sl-color-accent);
+  color: white !important;
+  font-weight: bold;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  text-decoration: none !important;
+  transition: opacity 0.2s ease;
+}
+
+.download-btn:hover {
+  opacity: 0.9;
+}
+
+/*
+ * Starlight は横スクロール用に table を display:block にする。
+ * その結果 table だけ幅いっぱいになり、thead/tbody がコンテンツ幅のまま残る。
+ * overflow は .table-scroll に移し、table は通常レイアウトに戻す。
+ */
+.sl-markdown-content .table-scroll:not(:where(.not-content *)) {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.sl-markdown-content .table-scroll table:not(:where(.not-content *)) {
+  display: table;
+  width: 100%;
+  overflow: visible;
+}

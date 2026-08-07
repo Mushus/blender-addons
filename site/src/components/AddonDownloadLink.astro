@@ -1,0 +1,23 @@
+---
+import packagesData from '../data/packages.json';
+
+interface Props {
+  packageId: string;
+  lang?: 'ja' | 'en';
+}
+
+const { packageId, lang = 'ja' } = Astro.props;
+const pkg = packagesData.packages.find((item) => item.id === packageId);
+const label = lang === 'ja' ? 'ZIP をダウンロード' : 'Download ZIP';
+const unavailable = lang === 'ja' ? '公開済みのダウンロードはまだありません。' : 'No published download is available yet.';
+---
+
+<div style="margin: 1.5rem 0;">
+  {pkg?.url ? (
+    <a href={pkg.url} class="download-btn">
+      {pkg.name || pkg.id} — {label}
+    </a>
+  ) : (
+    <p>{unavailable}</p>
+  )}
+</div>

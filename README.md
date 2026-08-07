@@ -1,33 +1,41 @@
-# Blender Add-on Tools
+# Blender Add-ons
 
-Small Blender tools released independently and grouped in the UI by purpose.
+3D モデリングやセットアップ作業を速くする、Blender 向けアドオン集です。
 
-## Download
+各アドオンは個別の ZIP としてインストールできます。まとめて入れる Suite パッケージも用意しています。
 
-Download the current stable versions from the [Blender Add-on Tools download page](https://mushus.github.io/blender-addons/). The [Japanese page](https://mushus.github.io/blender-addons/ja/) is also available.
+## ダウンロード
 
-The first extracted tool is `UV Island Mask`. It creates a mask image from selected UV faces and supports multiple edit-mode mesh objects, image name, resolution, and bake margin settings.
+- [ダウンロード一覧（日本語）](https://mushus.github.io/blender-addons/downloads/)
+- [Download list (English)](https://mushus.github.io/blender-addons/en/downloads/)
+- [GitHub Releases](https://github.com/Mushus/blender-addons/releases/latest)
 
-## UI model
+## アドオン一覧
 
-Each tool is its own installable add-on. Tools declare a `group_id`, such as `uv_utility`; the embedded host combines installed tools with the same group into one Blender panel. One installed tool produces one action row; additional tools add rows to that same group panel.
+| アドオン | できること |
+| :--- | :--- |
+| [**UV Island Mask**](https://mushus.github.io/blender-addons/addons/uv-island-mask/) | 選択した UV 面からマスク画像を生成します |
+| [**Slide Relax**](https://mushus.github.io/blender-addons/addons/slide-relax/) | 編集モードで形状を保ちながら、選択頂点の配置を滑らかにします |
 
-## Development
+## インストール
 
-```powershell
-python -m pip install -r requirements-dev.txt
-python -m ruff check .
-python -m basedpyright
-.\scripts\make_zip.ps1
-```
+1. 上記から目的のアドオン ZIP をダウンロードします（**解凍しないでください**）
+2. Blender で **編集 > プリファレンス > アドオン** を開きます
+3. **インストール...** から ZIP を選びます
+4. 一覧でアドオンにチェックを入れて有効化します
 
-The Windows CI runs Blender smoke tests. Docker is used for static checks and ZIP-layout tests that do not require Blender.
+更新時は、古い版を **削除** してから新しい ZIP を入れ直してください。
 
-## Release model
+詳しい手順・トラブル対処はドキュメントを参照してください。
 
-- `main` is release-ready.
-- `work` is the shared development branch.
-- `feature/<tool>-<topic>` branches hold focused changes.
-- Tool versions use `YYYY.MM.DD` and are updated in each tool's `bl_info`.
-- A successful `main` CI run creates or updates one daily Draft Release.
-- Only changed tool ZIPs are attached; the generated manifest and download page point to the latest asset for every tool.
+- [インストール方法](https://mushus.github.io/blender-addons/guides/installation/)
+- [FAQ](https://mushus.github.io/blender-addons/guides/faq/)
+
+## ドキュメント
+
+- [日本語](https://mushus.github.io/blender-addons/)
+- [English](https://mushus.github.io/blender-addons/en/)
+
+## 開発者向け
+
+環境構築・検証・ブランチ運用は [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。

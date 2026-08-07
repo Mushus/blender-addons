@@ -8,6 +8,13 @@
       "status": "stable",
       "group_id": "uv_utility",
       "group_label": "UV Utility"
+    },
+    {
+      "id": "slide_relax",
+      "source": "addons/slide_relax",
+      "status": "stable",
+      "group_id": "mesh_utility",
+      "group_label": "Mesh Utility"
     }
   ]
 }

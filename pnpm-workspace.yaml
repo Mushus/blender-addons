@@ -1,0 +1,11 @@
+allowBuilds:
+  esbuild: true
+  sharp: true
+  tldjs: false
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+
+packages:
+  - 'site'
