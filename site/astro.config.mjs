@@ -4,7 +4,8 @@ import generatePackages from './integrations/generate-packages.mjs';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://mushus.github.io/blender-addons',
+  site: 'https://mushus.github.io',
+  base: '/blender-addons',
   integrations: [
     generatePackages(),
     starlight({

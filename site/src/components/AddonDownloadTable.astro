@@ -8,6 +8,7 @@ interface Props {
 const { lang = 'ja' } = Astro.props;
 
 const isJa = lang === 'ja';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const labels = {
   suiteTitle: isJa ? 'アドオン一括パッケージ (Suite)' : 'Complete Add-on Suite',
   suiteDesc: isJa
@@ -59,7 +60,7 @@ const suite = packagesData.suite;
               <td>{pkg.group_label || pkg.group_id}</td>
               <td>
                 {pkg.doc_link ? (
-                  <a href={isJa ? pkg.doc_link : `/en${pkg.doc_link}`}>
+                  <a href={`${base}${isJa ? pkg.doc_link : `/en${pkg.doc_link}`}`}>
                     {pkg.name || pkg.id}
                   </a>
                 ) : (
