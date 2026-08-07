@@ -1,4 +1,9 @@
-"""Durable registration handles that survive module reload."""
+"""再読込後も生き残る登録ハンドルを driver_namespace に置く。
+
+モジュール再読込でローカル変数・関数 identity は差し替わる一方、
+bpy.utils.register_class や Scene プロパティ、host 登録は残る。
+unregister が新しい参照しか知らないと古い登録が漏れ、再インストールで衝突する。
+"""
 
 from __future__ import annotations
 
@@ -13,6 +18,7 @@ def get_state() -> dict | None:
 
 
 def begin_state() -> dict:
+    """新規インストール用の空 state を置き、以降の登録ハンドルをここに追記する。"""
     state = {
         "classes": [],
         "scene_prop": None,
@@ -25,9 +31,10 @@ def begin_state() -> dict:
 
 
 def uninstall() -> None:
-    """Remove any previous installation using durable references only."""
+    """durable 参照だけで前回インストールを剥がす。欠落・二重呼びでも落とさない。"""
     state = get_state()
     if state is None:
+        # state が消えていても Scene プロパティだけ残っていることがある。
         if hasattr(bpy.types.Scene, "edit_vertex_relax"):
             try:
                 del bpy.types.Scene.edit_vertex_relax
@@ -42,6 +49,7 @@ def uninstall() -> None:
         try:
             unregister_tool(tool_id, owner_id)
         except Exception:
+            # 保存した callback が壊れている場合、host の durable dict から直接除去する。
             host_state = bpy.app.driver_namespace.get(HOST_KEY)
             if host_state is not None:
                 owners = host_state.get("tools", {}).get(tool_id)

@@ -1,3 +1,10 @@
+"""複数ツールを 1 つのサイドバーパネルに束ねる埋め込みホスト。
+
+各アドオン ZIP は自己完結のため host を同梱する。実体の共有は
+driver_namespace 上の durable dict で行い、最後のツールが外れたら
+パネルと state ごと消す。
+"""
+
 from dataclasses import dataclass
 
 import bpy
@@ -29,6 +36,7 @@ def _state():
 
 
 def _group_specs(state, group_id):
+    """グループ内ツールを sort_order → tool_id で安定ソートする。"""
     return sorted(
         [
             spec
@@ -41,6 +49,7 @@ def _group_specs(state, group_id):
 
 
 def _safe_poll(spec, context):
+    # 1 ツールの poll 例外でパネル全体を落とさない。
     try:
         return bool(spec.poll(context))
     except Exception:
@@ -48,6 +57,7 @@ def _safe_poll(spec, context):
 
 
 def _make_panel(state, group_id, spec):
+    """グループ初回登録時だけ Panel クラスを動的生成する。"""
     panel_name = f"BLENDER_ADDON_TOOLS_PT_{group_id}"
 
     def poll(cls, context):
@@ -85,6 +95,7 @@ def _ensure_group(state, spec):
 
 def register_tool(spec: ToolSpec):
     state = _state()
+    # 同一 tool_id を複数 owner が持てる（再インストール中の過渡状態向け）。
     owners = state["tools"].setdefault(spec.tool_id, {})
     owners[spec.owner_id] = spec
     _ensure_group(state, spec)
@@ -99,6 +110,7 @@ def unregister_tool(tool_id: str, owner_id: str):
     if owners is None:
         return
     owners.pop(owner_id, None)
+    # 他 owner が残っている間はパネルを維持する。
     if owners:
         return
 

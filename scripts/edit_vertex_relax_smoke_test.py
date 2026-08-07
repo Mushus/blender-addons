@@ -21,6 +21,7 @@ def parse_args():
 
 
 def make_fan(name: str):
+    """中心点が偏った扇形。接線緩和の移動量を既知座標で検証するため。"""
     mesh = bpy.data.meshes.new(f"{name} Mesh")
     mesh.from_pydata(
         [(0, 0, 0), (2, 0, 0), (2, 2, 0), (0, 2, 0), (0.4, 0.3, 0)],
@@ -54,6 +55,10 @@ def center_coordinate(mesh):
 
 
 def test_relax_selected_vertices():
+    """背景: マルチオブジェクト Edit Mode と境界保持が本番の主要経路。
+    なぜ: 選択頂点だけ動き、非選択は不変、strength=0 は無変更、
+    境界頂点は内向きに動かないことを回帰で固定する。
+    """
     first = make_fan("Vertex Relax First")
     second = make_fan("Vertex Relax Second")
     bpy.context.view_layer.objects.active = first
@@ -99,6 +104,7 @@ def test_relax_selected_vertices():
 
 
 def make_boundary_strip(name: str):
+    """境界辺上の中間点が内寄りに置かれた短冊。境界沿い移動の可否を見る。"""
     mesh = bpy.data.meshes.new(f"{name} Mesh")
     mesh.from_pydata(
         [(0, 0, 0), (0.7, 0, 0), (2, 0, 0), (0, 1, 0), (1, 1, 0), (2, 1, 0)],
@@ -112,6 +118,9 @@ def make_boundary_strip(name: str):
 
 
 def test_boundary_slide_preserves_outline():
+    """背景: 境界保持は内向き成分だけを除去し、境界沿いのスライドは残す仕様。
+    なぜ: 輪郭収縮だけを防ぎつつ、境界上の偏り緩和が効くことを固定する。
+    """
     obj = make_boundary_strip("Vertex Relax Boundary Slide")
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
@@ -130,6 +139,7 @@ def test_boundary_slide_preserves_outline():
 
     bpy.ops.object.mode_set(mode="OBJECT")
     bpy.data.objects.remove(obj, do_unlink=True)
+
 
 def main():
     options = parse_args()
@@ -150,6 +160,7 @@ def main():
             bpy.ops.object.mode_set(mode="OBJECT")
         addon.unregister()
     print("Edit Vertex Relax functional smoke test passed")
+
 
 
 if __name__ == "__main__":

@@ -16,6 +16,8 @@ bl_info = {
 }
 
 _tool_id = "edit_vertex_relax"
+
+# reload 順: 依存先を先に読む。runtime は register 側で別途取り直す。
 _CHILD_MODULES = (
     "runtime",
     "embedded_host.registry",
@@ -28,7 +30,7 @@ _CHILD_MODULES = (
 
 
 def _reload_child_modules() -> None:
-    """Reload implementation modules after durable cleanup."""
+    """再読込後の実装モジュールへ差し替える。"""
     for module_name in _CHILD_MODULES:
         module = sys.modules.get(f"{__package__}.{module_name}")
         if module is not None:
@@ -44,6 +46,8 @@ def _bindings():
 
 
 def register() -> None:
+    # モジュール再読込でローカル参照は消えるが、RNA / host 登録は残る。
+    # 先に durable uninstall してから reload しないと二重登録になる。
     runtime_mod = import_module(f"{__package__}.runtime")
     runtime_mod.uninstall()
     _reload_child_modules()
@@ -52,6 +56,7 @@ def register() -> None:
     host, operator_module, properties_module, ui_module = _bindings()
     classes = (properties_module.EVR_Settings, operator_module.EVR_OT_relax_selected_vertices)
 
+    # 以後の登録ハンドルはすべて state に保存し、uninstall はこれだけを見る。
     state = runtime_mod.begin_state()
     for cls in classes:
         bpy.utils.register_class(cls)
@@ -61,6 +66,7 @@ def register() -> None:
     state["scene_prop"] = "edit_vertex_relax"
     state["tool_id"] = _tool_id
     state["owner_id"] = __package__
+    # host.unregister_tool は reload 後に差し替わるため、登録時点の関数を保持する。
     state["unregister_tool"] = host.unregister_tool
 
     host.register_tool(
@@ -81,6 +87,7 @@ def register() -> None:
 
 
 def unregister() -> None:
+    # モジュールグローバルに依存しない。durable state だけを辿る。
     runtime_mod = sys.modules.get(f"{__package__}.runtime")
     if runtime_mod is None:
         runtime_mod = import_module(f"{__package__}.runtime")
