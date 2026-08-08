@@ -109,13 +109,14 @@ def smooth_all_weights(obj, factor: float, iterations: int) -> tuple[int, int]:
             updates: list[tuple[object, int, float]] = []
             for vert in smoothable:
                 neighbours = [edge.other_vert(vert) for edge in vert.link_edges]
+                dvert = vert[deform_layer]
                 for group in unlocked:
                     average = sum(snapshot[neighbour.index][group] for neighbour in neighbours)
                     average /= len(neighbours)
                     old = snapshot[vert.index][group]
-                    updates.append((vert, group, (1.0 - factor) * old + factor * average))
-            for vert, group, value in updates:
-                _set_weight(vert[deform_layer], group, value)
+                    updates.append((dvert, group, (1.0 - factor) * old + factor * average))
+            for dvert, group, value in updates:
+                _set_weight(dvert, group, value)
 
     # ロック分を温存し、残りをアンロック VG へ再配分する（Blender Normalize All と同型）。
     for vert in selected:
