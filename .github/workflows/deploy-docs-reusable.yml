@@ -13,28 +13,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # Site fixes must not be pinned to an older release tag. Package
           # download metadata is generated from the published Releases API.
           ref: main
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      # pnpm 11+ uses pnpm/setup (successor to pnpm/action-setup).
+      # pnpm 11 requires Node >= 22.13 (uses node:sqlite).
+      - name: Setup pnpm and Node
+        uses: pnpm/setup@v2
         with:
           version: 11
-
-      - name: Setup Node
-        uses: actions/setup-node@v5
-        with:
-          # pnpm 11 requires Node >= 22.13 (uses node:sqlite)
-          node-version: 22
-          cache: "pnpm"
+          runtime: node@22
+          cache: true
+          install: false
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -46,7 +44,7 @@ jobs:
         run: pnpm site:build
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: site/dist
 
