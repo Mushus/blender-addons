@@ -14,14 +14,6 @@ import AddonDownloadLink from '../../../../components/AddonDownloadLink.astro';
 
 **Smooth Weight** smooths every unlocked armature deform weight on selected Weight Paint vertices, then normalizes them. Unlike Blender’s built-in smooth, it is not limited to the active (displayed) vertex group.
 
-```mermaid
-flowchart LR
-  sel[SelectedVerts] --> smooth[SmoothUnlockedDeformVGs]
-  smooth --> norm[NormalizeSelected]
-  locked[LockedOrNonBoneVG] -.->|no write| norm
-  unsel[UnselectedVerts] -.->|no write| norm
-```
-
 ---
 
 ## UI Location

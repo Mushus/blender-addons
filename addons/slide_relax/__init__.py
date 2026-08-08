@@ -9,7 +9,7 @@ bl_info = {
     "name": "Slide Relax",
     "author": "Mushus",
     "version": (2026, 8, 7),
-    "blender": (5, 1, 0),
+    "blender": (4, 2, 0),
     "location": "3D View > Sidebar > Edit",
     "description": "Relax selected Edit Mode vertices along their local tangent planes.",
     "category": "Mesh",

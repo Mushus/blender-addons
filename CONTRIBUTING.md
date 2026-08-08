@@ -10,13 +10,13 @@
 - Git
 - Python 3.10 以上（`pyproject.toml` の設定に合わせます）
 - [uv](https://docs.astral.sh/uv/)
-- Blender 5.1（バックグラウンド smoke test 用）
+- Blender 5.2 / 4.5 / 4.2 LTS（バックグラウンド smoke test 用）
 - GUI smoke test を実行する場合は Docker、Xvfb、ImageMagick
 
 Blender は Windows では、例えば次の場所にインストールします。
 
 ```text
-C:\Program Files\Blender Foundation\Blender 5.1\5.1\blender.exe
+C:\Program Files\Blender Foundation\Blender 5.2\5.2\blender.exe
 ```
 
 ## 環境構築（Windows PowerShell）
