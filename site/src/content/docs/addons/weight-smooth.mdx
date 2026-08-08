@@ -14,14 +14,6 @@ import AddonDownloadLink from '../../../components/AddonDownloadLink.astro';
 
 **Smooth Weight** は、Weight Paint の選択頂点に対して、表示中の 1 頂点グループだけでなく、アーマチュアの全変形ボーンウェイトをまとめてスムーズし、Normalize するアドオンです。
 
-```mermaid
-flowchart LR
-  sel[SelectedVerts] --> smooth[SmoothUnlockedDeformVGs]
-  smooth --> norm[NormalizeSelected]
-  locked[LockedOrNonBoneVG] -.->|no write| norm
-  unsel[UnselectedVerts] -.->|no write| norm
-```
-
 ---
 
 ## UIの配置場所
