@@ -41,6 +41,14 @@ export default defineConfig({
           label: 'アドオン解説',
           items: [
             { label: 'Slide Relax', link: '/addons/slide-relax/' },
+            {
+              label: 'Smooth Weight',
+              link: '/addons/weight-smooth-all/',
+            },
+            {
+              label: 'In-Between Shape Key',
+              link: '/addons/in-between-shape-key/',
+            },
             { label: 'UV Island Mask', link: '/addons/uv-island-mask/' },
           ],
         },

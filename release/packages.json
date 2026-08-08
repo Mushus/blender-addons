@@ -15,6 +15,13 @@
       "status": "stable",
       "group_id": "mesh_utility",
       "group_label": "Mesh Utility"
+    },
+    {
+      "id": "weight_smooth_all",
+      "source": "addons/weight_smooth_all",
+      "status": "stable",
+      "group_id": "weight_utility",
+      "group_label": "Weight Utility"
     }
   ]
 }
