@@ -13,6 +13,16 @@
       "file": "uv_island_mask-2026.08.04-blender5.1.zip"
     },
     {
+      "id": "in_between_shape_key",
+      "name": "In Between Shape Key",
+      "group_id": "in_between_shape_key",
+      "group_label": "In Between Shape Key",
+      "version": "2026.8.6",
+      "blender_target": "5.1.0",
+      "url": null,
+      "doc_link": "/addons/in-between-shape-key/"
+    },
+    {
       "id": "slide_relax",
       "name": "Slide Relax",
       "group_id": "mesh_utility",
@@ -23,6 +33,16 @@
       "doc_link": "/addons/slide-relax/",
       "changed": true,
       "file": "slide_relax-2026.08.07-blender5.1.zip"
+    },
+    {
+      "id": "weight_smooth_all",
+      "name": "Smooth Weight",
+      "group_id": "weight_utility",
+      "group_label": "Weight Utility",
+      "version": "2026.8.8",
+      "blender_target": "5.1.0",
+      "url": null,
+      "doc_link": "/addons/weight-smooth-all/"
     }
   ],
   "suite": {

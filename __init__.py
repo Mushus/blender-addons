@@ -1,10 +1,10 @@
 bl_info = {
     "name": "Blender Add-on Tools Suite",
     "author": "Mushus",
-    "version": (2026, 8, 7),
+    "version": (2026, 8, 8),
     "blender": (5, 1, 0),
     "location": "UV Editor > Sidebar > Edit; 3D View > Sidebar > Edit; Properties > Data > Shape Keys; File > Export > FBX (.fbx)",
-    "description": "UV Island Mask, Slide Relax, and In Between Shape Key.",
+    "description": "UV Island Mask, Slide Relax, Smooth Weight, and In Between Shape Key.",
     "category": "3D View",
 }
 
