@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import bpy
 
-RUNTIME_KEY = "weight_smooth_all.runtime.v1"
+RUNTIME_KEY = "weight_smooth.runtime.v1"
 HOST_KEY = "blender_addon_tools.embedded_host.v1"
 
 
@@ -35,9 +35,9 @@ def uninstall() -> None:
     state = get_state()
     if state is None:
         # state が消えていても Scene プロパティだけ残っていることがある。
-        if hasattr(bpy.types.Scene, "weight_smooth_all"):
+        if hasattr(bpy.types.Scene, "weight_smooth"):
             try:
-                del bpy.types.Scene.weight_smooth_all
+                del bpy.types.Scene.weight_smooth
             except (AttributeError, TypeError):
                 pass
         return

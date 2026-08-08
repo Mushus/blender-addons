@@ -114,14 +114,14 @@ def test_enable_vertex_select_then_smooth():
     """背景: Weight Paint で頂点選択マスクが無いと選択が効かない。
     なぜ: 初回クリックでマスク有効化、2 回目でスムーズする契約を固定する。
     """
-    obj, arm = make_skinned_strip("Weight Smooth All")
+    obj, arm = make_skinned_strip("Weight Smooth")
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
     bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
     obj.data.use_paint_mask_vertex = False
     obj.data.use_paint_mask = True
 
-    assert bpy.ops.weight_smooth_all.smooth() == {"FINISHED"}
+    assert bpy.ops.weight_smooth.smooth() == {"FINISHED"}
     assert obj.data.use_paint_mask_vertex is True
     assert obj.data.use_paint_mask is False
 
@@ -135,10 +135,10 @@ def test_enable_vertex_select_then_smooth():
     assert before_center["BoneB"] == 0.0
     assert before_center["Mask"] == 0.25
 
-    settings = bpy.context.scene.weight_smooth_all
+    settings = bpy.context.scene.weight_smooth
     settings.factor = 1.0
     settings.iterations = 1
-    assert bpy.ops.weight_smooth_all.smooth() == {"FINISHED"}
+    assert bpy.ops.weight_smooth.smooth() == {"FINISHED"}
 
     after_unselected = read_weights(obj, 0)
     after_center = read_weights(obj, 1)
@@ -163,10 +163,10 @@ def test_locked_and_missing_armature():
 
     before = read_weights(obj, 1)
     assert abs(before["BoneB"] - 0.3) < 1e-6
-    settings = bpy.context.scene.weight_smooth_all
+    settings = bpy.context.scene.weight_smooth
     settings.factor = 1.0
     settings.iterations = 1
-    assert bpy.ops.weight_smooth_all.smooth() == {"FINISHED"}
+    assert bpy.ops.weight_smooth.smooth() == {"FINISHED"}
     after = read_weights(obj, 1)
     assert abs(after["BoneB"] - 0.3) < 1e-6
     assert after["Mask"] == before["Mask"]
@@ -184,7 +184,7 @@ def test_locked_and_missing_armature():
     # ERROR レポート付き CANCELLED は bpy.ops 経由で RuntimeError になる。
     raised = False
     try:
-        bpy.ops.weight_smooth_all.smooth()
+        bpy.ops.weight_smooth.smooth()
     except RuntimeError as exc:
         raised = True
         assert "Armature not found" in str(exc)
@@ -199,20 +199,20 @@ def test_no_selection():
     """
     obj, arm = make_skinned_strip("Weight Smooth Empty")
     enter_weight_paint_vertex_select(obj, set())
-    assert bpy.ops.weight_smooth_all.smooth() == {"CANCELLED"}
+    assert bpy.ops.weight_smooth.smooth() == {"CANCELLED"}
     cleanup(obj, arm)
 
 
 def main():
     options = parse_args()
-    temp_dir = Path(tempfile.mkdtemp(prefix="blender-weight-smooth-all-smoke-"))
+    temp_dir = Path(tempfile.mkdtemp(prefix="blender-weight-smooth-smoke-"))
     extract_zip(Path(options.zip).resolve(), temp_dir)
     sys.path.insert(0, str(temp_dir))
 
-    addon = importlib.import_module("weight_smooth_all")
+    addon = importlib.import_module("weight_smooth")
     addon.register()
     host_state = bpy.app.driver_namespace["blender_addon_tools.embedded_host.v1"]
-    assert "weight_smooth_all" in host_state["tools"]
+    assert "weight_smooth" in host_state["tools"]
     assert "weight_utility" in host_state["groups"]
     clear_factory_mesh()
     try:

@@ -43,7 +43,7 @@ export default defineConfig({
             { label: 'Slide Relax', link: '/addons/slide-relax/' },
             {
               label: 'Smooth Weight',
-              link: '/addons/weight-smooth-all/',
+              link: '/addons/weight-smooth/',
             },
             {
               label: 'In-Between Shape Key',

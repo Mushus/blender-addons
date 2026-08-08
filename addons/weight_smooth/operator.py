@@ -138,8 +138,8 @@ def smooth_all_weights(obj, factor: float, iterations: int) -> tuple[int, int]:
     return len(selected), len(smoothable)
 
 
-class WSA_OT_smooth(bpy.types.Operator):
-    bl_idname = "weight_smooth_all.smooth"
+class WS_OT_smooth(bpy.types.Operator):
+    bl_idname = "weight_smooth.smooth"
     bl_label = "Smooth Weight"
     bl_description = (
         "Smooth and normalize all deform bone weights on selected vertices. "
@@ -162,7 +162,7 @@ class WSA_OT_smooth(bpy.types.Operator):
             self.report({"INFO"}, "Enabled vertex selection; select vertices and run again")
             return {"FINISHED"}
 
-        settings = context.scene.weight_smooth_all
+        settings = context.scene.weight_smooth
         selected_count = 0
         smoothable_count = 0
         try:

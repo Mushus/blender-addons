@@ -1,4 +1,4 @@
-"""ドキュメント用スクリーンショット: weight_smooth_all。
+"""ドキュメント用スクリーンショット: weight_smooth。
 
 背景: Weight Paint サイドバー Edit タブのツール UI が docs の主な説明対象。
 なぜ: Docker / Xvfb 上で UI 領域を固定条件で撮り、手動スクショ依存を減らす。
@@ -76,13 +76,13 @@ def _enter_weight_paint(obj) -> None:
 
 def _shot(output_dir: Path) -> list[Path]:
     options = parse_shot_args()
-    enable_addon(Path(options.zip), "weight_smooth_all")
+    enable_addon(Path(options.zip), "weight_smooth")
 
     _clear_factory_mesh()
     obj = _make_skinned_strip("Smooth Weight Doc")
     _enter_weight_paint(obj)
 
-    settings = bpy.context.scene.weight_smooth_all
+    settings = bpy.context.scene.weight_smooth
     settings.expanded = True
 
     area = find_area("VIEW_3D")

@@ -16,7 +16,7 @@
 | :--- | :--- |
 | [**UV Island Mask**](https://mushus.github.io/blender-addons/addons/uv-island-mask/) | 選択した UV 面からマスク画像を生成します |
 | [**Slide Relax**](https://mushus.github.io/blender-addons/addons/slide-relax/) | 編集モードで形状を保ちながら、選択頂点の配置を滑らかにします |
-| [**Smooth Weight**](https://mushus.github.io/blender-addons/addons/weight-smooth-all/) | ウェイトペイントで選択頂点の全ボーンウェイトをスムーズし正規化します |
+| [**Smooth Weight**](https://mushus.github.io/blender-addons/addons/weight-smooth/) | ウェイトペイントで選択頂点の全ボーンウェイトをスムーズし正規化します |
 
 ## インストール
 
