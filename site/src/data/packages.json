@@ -35,14 +35,14 @@
       "file": "slide_relax-2026.08.07-blender5.1.zip"
     },
     {
-      "id": "weight_smooth_all",
+      "id": "weight_smooth",
       "name": "Smooth Weight",
       "group_id": "weight_utility",
       "group_label": "Weight Utility",
       "version": "2026.8.8",
       "blender_target": "5.1.0",
       "url": null,
-      "doc_link": "/addons/weight-smooth-all/"
+      "doc_link": "/addons/weight-smooth/"
     }
   ],
   "suite": {
