@@ -45,10 +45,6 @@ export default defineConfig({
               label: 'Smooth Weight',
               link: '/addons/weight-smooth/',
             },
-            {
-              label: 'In-Between Shape Key',
-              link: '/addons/in-between-shape-key/',
-            },
             { label: 'UV Island Mask', link: '/addons/uv-island-mask/' },
           ],
         },

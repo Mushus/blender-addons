@@ -58,6 +58,15 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy
     steps:
+      # release イベントの GITHUB_SHA は tag のコミット。同じ SHA で再デプロイすると
+      # Pages は success のまま旧 artifact を配信し続ける。
+      # https://github.com/actions/deploy-pages/issues/383
+      - name: Set unique pages build version
+        run: |
+          unique="$(printf '%s-%s-%s' '${{ github.run_id }}' '${{ github.run_attempt }}' '${{ github.sha }}' | sha256sum | cut -c1-40)"
+          echo "GITHUB_SHA=${unique}" >> "${GITHUB_ENV}"
+          echo "pages_build_version=${unique}"
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
