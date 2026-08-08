@@ -8,7 +8,9 @@ PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run Blender commands or tests inside a Docker container.")
-    parser.add_argument("--image", default="blender-addon-tools:blender-5.1.2", help="Docker image tag.")
+    parser.add_argument("--image", default="blender-addon-tools:blender-5.2", help="Docker image tag.")
+    parser.add_argument("--major", default="5.2", help="Blender major version for build (e.g. 5.2).")
+    parser.add_argument("--version", default="5.2.0", help="Blender full version for build (e.g. 5.2.0).")
     parser.add_argument("--build", action="store_true", help="Build the Docker image before running.")
     parser.add_argument("--exec", action="store_true", help="Run the command directly inside the container without 'blender' prefix.")
     parser.add_argument("container_args", nargs=argparse.REMAINDER, help="Arguments passed to container execution.")
@@ -18,8 +20,8 @@ def main() -> None:
     if args.build:
         build_cmd = [
             "docker", "build",
-            "--build-arg", "BLENDER_MAJOR=5.1",
-            "--build-arg", "BLENDER_VERSION=5.1.2",
+            "--build-arg", f"BLENDER_MAJOR={args.major}",
+            "--build-arg", f"BLENDER_VERSION={args.version}",
             "--tag", args.image,
             str(PROJECT_ROOT)
         ]

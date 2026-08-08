@@ -1,10 +1,11 @@
 .git/
 .github/
 .venv/
-.blender-cache/
 .ruff_cache/
 build/
 dist/
+tmp/*.exe
+tmp/intel-graphics-clean-install/
 __pycache__/
 *.py[cod]
 *.zip

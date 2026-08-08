@@ -9,7 +9,7 @@ bl_info = {
     "name": "Smooth Weight",
     "author": "Mushus",
     "version": (2026, 8, 8),
-    "blender": (5, 1, 0),
+    "blender": (4, 2, 0),
     "location": "3D View > Sidebar > Edit",
     "description": "Smooth and normalize all deform bone weights on selected Weight Paint vertices.",
     "category": "Paint",
