@@ -4,7 +4,7 @@ bl_info = {
     "version": (2026, 8, 7),
     "blender": (5, 1, 0),
     "location": "UV Editor > Sidebar > Edit; 3D View > Sidebar > Edit",
-    "description": "UV Island Mask and Slide Relax.",
+    "description": "Bake UV mask images and relax selected mesh vertices.",
     "category": "3D View",
 }
 

@@ -1,25 +1,24 @@
 ---
 title: UV Island Mask
-description: Generate selection masks and vertex group masks based on UV island boundaries.
+description: Bake a mask image from UV faces selected in the UV Editor.
 ---
 
 import { Badge } from '@astrojs/starlight/components';
 import AddonDownloadLink from '../../../../components/AddonDownloadLink.astro';
 
-<Badge text="Blender 4.0+" /> <Badge text="UV / Texture Paint" />
+<Badge text="Blender 4.0+" /> <Badge text="UV Editor" />
 
 <AddonDownloadLink packageId="uv_island_mask" lang="en" />
 
 ## Overview
 
-**UV Island Mask** allows 3D artists to generate mesh selection masks and vertex group masks based on UV island topology with a single click. Ideal for texture painting and material isolation.
+**UV Island Mask** bakes a mask image from the UV faces selected in the UV Editor. Selected faces are baked as white and the remaining faces as black. You can set the image resolution and bake margin for texture workflows.
 
 ---
 
 ## UI Location
 
-- **UV Editor** > Select Menu
-- 3D Viewport > **Texture Paint Mode** > Sidebar (`N` key)
+- **UV Editor** > Sidebar (`N` key) > `Edit`
 
 ![UV Island Mask sidebar](../../../../assets/addons/uv_island_mask/sidebar.png)
 
@@ -27,10 +26,12 @@ import AddonDownloadLink from '../../../../components/AddonDownloadLink.astro';
 
 ## Features & Usage
 
-1. Select elements belonging to target UV islands in UV or Edit mode.
-2. Run **Mask by UV Island** to expand selection across entire UV islands.
+1. Select the UV faces to include in the mask in the UV Editor.
+2. Run **Bake UV Island Mask** from the `Edit` sidebar.
+3. Adjust the resolution and margin as needed. The generated mask image is displayed in an Image Editor.
 
 ### Key Highlights
 
-- Single-click detection of complex UV seam boundaries
-- Automatic assignment of vertex group mask regions
+- Generate a black-and-white mask image from selected UV faces
+- Square or custom width and height resolution
+- Configurable bake margin with automatic margin support
