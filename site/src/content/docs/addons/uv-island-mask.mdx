@@ -1,25 +1,24 @@
 ---
 title: UV Island Mask
-description: UVアイランド単位で選択範囲や頂点グループマスクを生成するUVペイント補助ツール
+description: UVエディターで選択したUV面からマスク画像をベイクするツール
 ---
 
 import { Badge } from '@astrojs/starlight/components';
 import AddonDownloadLink from '../../../components/AddonDownloadLink.astro';
 
-<Badge text="Blender 4.0+" /> <Badge text="UV / Texture Paint" />
+<Badge text="Blender 4.0+" /> <Badge text="UV Editor" />
 
 <AddonDownloadLink packageId="uv_island_mask" />
 
 ## 概要
 
-**UV Island Mask** は、UV展開されたアイランド構造をもとに、メッシュ選択範囲や頂点グループマスクをワンクリックで生成するアドオンです。テクスチャペイント時のマスク指定やマテリアル分けに役立ちます。
+**UV Island Mask** は、UVエディターで選択したUV面を白、それ以外を黒としてマスク画像にベイクするアドオンです。解像度とマージンを指定して、テクスチャ作成用のマスク画像を生成できます。
 
 ---
 
 ## UIの配置場所
 
-- **UV エディタ** > 選択 (Select) メニュー
-- 3D ビューポート > **テクスチャペイントモード** > サイドバー (`N` キー)
+- **UV エディター** > サイドバー (`N` キー) > `Edit`
 
 ![UV Island Mask サイドバー](../../../assets/addons/uv_island_mask/sidebar.png)
 
@@ -27,10 +26,12 @@ import AddonDownloadLink from '../../../components/AddonDownloadLink.astro';
 
 ## 主な機能と使い方
 
-1. テクスチャペイントまたはメッシュ編集時に、目的の UV アイランド上の要素を選択します。
-2. **Mask by UV Island** を実行すると、選択要素が含まれる UV アイランド全体がマスク範囲として自動抽出されます。
+1. UVエディターで、マスクにしたいUV面を選択します。
+2. `Edit` サイドバーの **Bake UV Island Mask** を実行します。
+3. 必要に応じて解像度とマージンを調整します。生成されたマスク画像はイメージエディターに表示されます。
 
 ### 主な特徴
 
-- 単一クリックで複雑なシーム境界を認識
-- 頂点グループへのマスク領域の自動割り当て機能
+- 選択したUV面から白黒のマスク画像を生成
+- 正方形または幅・高さを個別に指定できる解像度設定
+- ベイク時のマージン設定と自動マージン

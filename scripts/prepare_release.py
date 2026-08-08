@@ -65,11 +65,23 @@ def parse_package_version(source_dir: str) -> str:
     return f"{parts[0]:04d}.{parts[1]:02d}.{parts[2]:02d}"
 
 
+def force_push_tag(tag_name: str, target_sha: str) -> None:
+    """Move tag to target_sha and force-push to origin (CI recovery path)."""
+    run_command(["git", "tag", "-f", tag_name, target_sha])
+    run_command(["git", "push", "--force", "origin", f"refs/tags/{tag_name}"])
+    print(f"Force-pushed tag {tag_name} -> {target_sha}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Prepare draft release assets and upload to GitHub.")
     parser.add_argument("--no-draft", action="store_true", help="Skip GitHub release draft creation/upload.")
     parser.add_argument("--tag-name", default="", help="Tag name for release (default: release-YYYY.MM.DD).")
     parser.add_argument("--blender-target", default="", help="Blender target version suffix.")
+    parser.add_argument(
+        "--regenerate",
+        action="store_true",
+        help="Delete today's release, force-push the tag to HEAD, and recreate a draft (recovery path).",
+    )
     args = parser.parse_args()
 
     catalog_path = PROJECT_ROOT / "release" / "packages.json"
@@ -117,7 +129,12 @@ def main() -> None:
         f == "__init__.py" or f.startswith("scripts/") for f in changed_files
     )
 
-    if not changed_ids and not suite_changed:
+    # Regenerating a same-day release must rebuild everything so Docs republish
+    # still works even when only CI/workflow files changed.
+    if args.regenerate:
+        changed_ids = list(all_ids)
+        suite_changed = True
+    elif not changed_ids and not suite_changed:
         print("No releasable package changes detected.")
         sys.exit(0)
 
@@ -216,17 +233,50 @@ def main() -> None:
         )
         existing_is_draft = res.stdout.strip() if res.returncode == 0 else None
 
-        if existing_is_draft == "false":
+        if existing_is_draft == "false" and not args.regenerate:
             print("Today's release is already published; deferring additional changes to the next day.")
+            print("Re-run with --regenerate to replace it with a new draft.")
             sys.exit(0)
 
+        release_target = run_command(["git", "rev-parse", "HEAD"])
         assets = [str(p) for p in release_dir.iterdir() if p.is_file()]
 
-        if existing_is_draft == "true":
+        if args.regenerate:
+            # Drop the GitHub Release object, then force-move the git tag to HEAD
+            # so a later publish runs workflow YAML from the retargeted commit.
+            if existing_is_draft is not None:
+                print(f"Regenerating: deleting existing release {tag_name}")
+                subprocess.run(
+                    [gh_bin, "release", "delete", tag_name, "--yes"],
+                    cwd=PROJECT_ROOT,
+                    check=True,
+                    env=env,
+                )
+            print(f"Regenerating: force-pushing tag {tag_name} -> {release_target}")
+            force_push_tag(tag_name, release_target)
+            subprocess.run(
+                [
+                    gh_bin,
+                    "release",
+                    "create",
+                    tag_name,
+                    "--draft",
+                    "--target",
+                    release_target,
+                    "--title",
+                    tag_name,
+                    "--notes-file",
+                    str(body_path),
+                    *assets,
+                ],
+                cwd=PROJECT_ROOT,
+                check=True,
+                env=env,
+            )
+        elif existing_is_draft == "true":
             subprocess.run([gh_bin, "release", "upload", tag_name, *assets, "--clobber"], cwd=PROJECT_ROOT, check=True, env=env)
             subprocess.run([gh_bin, "release", "edit", tag_name, "--title", tag_name, "--notes-file", str(body_path)], cwd=PROJECT_ROOT, check=True, env=env)
         else:
-            release_target = run_command(["git", "rev-parse", "HEAD"])
             subprocess.run(
                 [
                     gh_bin,

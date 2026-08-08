@@ -34,3 +34,4 @@ rulesync.local.jsonc
 !.rulesync/.aiignore
 # End of Rulesync
 
+tmp
