@@ -14,6 +14,14 @@ import AddonDownloadLink from '../../../components/AddonDownloadLink.astro';
 
 **UV Island Mask** は、UVエディターで選択したUV面を白、それ以外を黒としてマスク画像にベイクするアドオンです。解像度とマージンを指定して、テクスチャ作成用のマスク画像を生成できます。
 
+```mermaid
+flowchart TD
+  Select["UVエディターで面/アイランドを選択"] --> TempObj["一時オブジェクト生成<br/>選択面: 白 (Emit 1.0)<br/>非選択面: 黒 (Emit 0.0)"]
+  TempObj --> Bake["Cycles EMIT ベイク実行<br/>(指定解像度 & マージン拡張)"]
+  Bake --> Image["白黒マスク画像を生成<br/>(テクスチャ作成やマスク用に即利用可能)"]
+  Bake --> Cleanup["一時オブジェクト & マテリアルの完全クリーンアップ"]
+```
+
 ---
 
 ## UIの配置場所

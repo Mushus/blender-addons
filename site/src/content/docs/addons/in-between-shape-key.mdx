@@ -14,6 +14,30 @@ import AddonDownloadLink from '../../../components/AddonDownloadLink.astro';
 
 **In-Between Shape Key** は、キャラクターの表情作成やモーフターゲットアニメーションにおいて、複数のシェイプキーの中間状態（In-between）を自動補間・作成するツールです。
 
+```mermaid
+flowchart LR
+  subgraph Input["コントローラー Value (0.0 〜 1.0)"]
+    V["Shape Key Value"]
+  end
+
+  subgraph Drivers["ドライバーによる区間自動補間"]
+    T0["Basis / @0<br/>(Value = 0.0)"]
+    T50["中間キー @50<br/>(Value = 0.5)"]
+    T100["最大キー @100<br/>(Value = 1.0)"]
+  end
+
+  subgraph Output["メッシュ形状"]
+    M["中間形状を経由した<br/>非線形な自然モーフ"]
+  end
+
+  V -->|0.0 〜 0.5| T0
+  V -->|0.0 〜 1.0| T50
+  V -->|0.5 〜 1.0| T100
+  T0 --> M
+  T50 --> M
+  T100 --> M
+```
+
 ---
 
 ## UIの配置場所
@@ -36,7 +60,7 @@ import AddonDownloadLink from '../../../components/AddonDownloadLink.astro';
 
 ### 主なオペレーター
 
-| オペレーター                        | 説明                                                           |
-| :---------------------------------- | :------------------------------------------------------------- |
-| **Convert to In-Between Shape Key** | 通常のシェイプキーをIn-Betweenコントローラーへ変換             |
-| **Add to In-Between** | 既存のシェイプキーをダイアログで指定して追加                  |
+| オペレーター                        | 説明                                               |
+| :---------------------------------- | :------------------------------------------------- |
+| **Convert to In-Between Shape Key** | 通常のシェイプキーをIn-Betweenコントローラーへ変換 |
+| **Add to In-Between**               | 既存のシェイプキーをダイアログで指定して追加       |

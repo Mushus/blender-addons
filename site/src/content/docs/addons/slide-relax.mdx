@@ -15,6 +15,19 @@ import AddonDownloadLink from '../../../components/AddonDownloadLink.astro';
 **Slide Relax** は、編集モードにおいて指定した頂点群の密度・配置を滑らかに緩和（リラックス）するアドオンです。
 ハイポリメッシュのトポロジー調整や、有機的モデルの表面のスムージング作業を高速化します。
 
+```mermaid
+flowchart TD
+  Sel["選択頂点群"] --> Lap["近傍頂点の平均座標を計算<br/>(Laplacian 変位)"]
+  Lap --> Tangent["法線成分を除去<br/>(接線平面へ投影し厚み・形状を維持)"]
+  Tangent --> Check{"Preserve Boundaries?"}
+  Check -->|有効| Filter["境界の内向き変位を除去<br/>(輪郭の縮みを防止)"]
+  Check -->|無効| Apply["変位 × Strength を座標に適用"]
+  Filter --> Apply
+  Apply --> Loop{"Iterations 完了？"}
+  Loop -->|いいえ| Lap
+  Loop -->|はい| Result["形状を保ったまま<br/>トポロジーを均等・滑らかに緩和"]
+```
+
 ---
 
 ## UIの配置場所
@@ -33,8 +46,8 @@ import AddonDownloadLink from '../../../components/AddonDownloadLink.astro';
 
 ### 主なパラメータ
 
-| パラメータ | 説明 |
-| :--- | :--- |
-| **Strength** | 1 回あたりの接線方向への緩和量（0.0 〜 1.0） |
-| **Iterations** | リラックス処理の繰り返し回数 |
+| パラメータ              | 説明                                             |
+| :---------------------- | :----------------------------------------------- |
+| **Strength**            | 1 回あたりの接線方向への緩和量（0.0 〜 1.0）     |
+| **Iterations**          | リラックス処理の繰り返し回数                     |
 | **Preserve Boundaries** | 境界頂点の内向き移動を抑え、輪郭の収縮を防ぎます |

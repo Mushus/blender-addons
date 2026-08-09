@@ -15,11 +15,18 @@ import AddonDownloadLink from '../../../components/AddonDownloadLink.astro';
 **Smooth Weight** は、Weight Paint の選択頂点に対して、表示中の 1 頂点グループだけでなく、アーマチュアの全変形ボーンウェイトをまとめてスムーズし、Normalize するアドオンです。
 
 ```mermaid
-flowchart LR
-  sel[SelectedVerts] --> smooth[SmoothUnlockedDeformVGs]
-  smooth --> norm[NormalizeSelected]
-  locked[LockedOrNonBoneVG] -.->|no write| norm
-  unsel[UnselectedVerts] -.->|no write| norm
+flowchart TD
+  Sel["選択頂点 (Weight Paint)"] --> GetVG["Armature の変形ボーン頂点グループを抽出"]
+  GetVG --> Smooth["アンロック変形ウェイトを一括スムーズ<br/>(近傍平均へ Iterations 回ブレンド)"]
+  Smooth --> Norm["ウェイト合計を 1.0 に正規化 (Normalize)"]
+
+  subgraph Protected["保護対象（書き込み・変更なし）"]
+    Locked["ロック中の頂点グループ"]
+    NonBone["非ボーン頂点グループ"]
+    Unselected["未選択の頂点"]
+  end
+
+  Protected -.->|値を固定して保持| Norm
 ```
 
 ---
@@ -42,10 +49,10 @@ flowchart LR
 
 ### 主なパラメータ
 
-| パラメータ | 説明 |
-| :--- | :--- |
-| **Factor** | 1 回あたり近傍平均へ寄せる量（0.0 〜 1.0） |
-| **Iterations** | スムーズ処理の繰り返し回数 |
+| パラメータ     | 説明                                       |
+| :------------- | :----------------------------------------- |
+| **Factor**     | 1 回あたり近傍平均へ寄せる量（0.0 〜 1.0） |
+| **Iterations** | スムーズ処理の繰り返し回数                 |
 
 ### 変更されないもの
 

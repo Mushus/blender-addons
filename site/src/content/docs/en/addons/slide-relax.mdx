@@ -14,6 +14,19 @@ import AddonDownloadLink from '../../../../components/AddonDownloadLink.astro';
 
 **Slide Relax** is a mesh editing tool that smoothly relaxes and evens out vertex spacing while retaining the overall surface volume and shape during Edit Mode. Excellent for retopology and organic modeling.
 
+```mermaid
+flowchart TD
+  Sel["Selected Vertices"] --> Lap["Calculate Neighbor Average<br/>(Laplacian Displacement)"]
+  Lap --> Tangent["Remove Normal Component<br/>(Project to tangent plane to keep shape)"]
+  Tangent --> Check{"Preserve Boundaries?"}
+  Check -->|Enabled| Filter["Remove Boundary Inward Displacement<br/>(Prevent outline shrinkage)"]
+  Check -->|Disabled| Apply["Apply Displacement × Strength"]
+  Filter --> Apply
+  Apply --> Loop{"Iterations Complete?"}
+  Loop -->|No| Lap
+  Loop -->|Yes| Result["Smooth, Even Topology<br/>Preserving Surface Shape"]
+```
+
 ---
 
 ## UI Location
@@ -32,8 +45,8 @@ import AddonDownloadLink from '../../../../components/AddonDownloadLink.astro';
 
 ### Parameters
 
-| Parameter | Description |
-| :--- | :--- |
-| **Strength** | Tangential relaxation amount per pass (0.0 to 1.0) |
-| **Iterations** | Number of relaxation passes |
+| Parameter               | Description                                                       |
+| :---------------------- | :---------------------------------------------------------------- |
+| **Strength**            | Tangential relaxation amount per pass (0.0 to 1.0)                |
+| **Iterations**          | Number of relaxation passes                                       |
 | **Preserve Boundaries** | Blocks inward motion on boundary vertices to avoid outline shrink |

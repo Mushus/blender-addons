@@ -24,7 +24,9 @@ async function getJson(url) {
   }
   const response = await fetch(url, { headers });
   if (!response.ok) {
-    throw new Error(`GET ${url} failed: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `GET ${url} failed: ${response.status} ${response.statusText}`
+    );
   }
   return response.json();
 }
@@ -36,13 +38,13 @@ async function getJson(url) {
  */
 function readBlInfoValue(content, key) {
   const stringMatch = content.match(
-    new RegExp(`"${key}"\\s*:\\s*"([^"]*)"`, 'm'),
+    new RegExp(`"${key}"\\s*:\\s*"([^"]*)"`, 'm')
   );
   if (stringMatch) {
     return stringMatch[1];
   }
   const tupleMatch = content.match(
-    new RegExp(`"${key}"\\s*:\\s*\\(([^)]*)\\)`, 'm'),
+    new RegExp(`"${key}"\\s*:\\s*\\(([^)]*)\\)`, 'm')
   );
   if (tupleMatch) {
     return tupleMatch[1]
@@ -128,7 +130,7 @@ async function loadReleasePackages(repository, packageIds) {
   let suite = null;
 
   const releases = await getJson(
-    `https://api.github.com/repos/${repository}/releases?per_page=100`,
+    `https://api.github.com/repos/${repository}/releases?per_page=100`
   );
   if (!Array.isArray(releases)) {
     throw new Error('GitHub releases response is not an array');
@@ -140,7 +142,7 @@ async function loadReleasePackages(repository, packageIds) {
     }
     const assets = release.assets ?? [];
     const manifestAsset = assets.find(
-      (asset) => asset.name === 'release-manifest.json',
+      (asset) => asset.name === 'release-manifest.json'
     );
     if (!manifestAsset) {
       continue;
@@ -149,7 +151,7 @@ async function loadReleasePackages(repository, packageIds) {
     const manifest = await getJson(manifestAsset.browser_download_url);
     if (manifest?.suite?.file && !suite) {
       const suiteAsset = assets.find(
-        (asset) => asset.name === manifest.suite.file,
+        (asset) => asset.name === manifest.suite.file
       );
       suite = {
         version: manifest.generated_at ?? '',
@@ -158,11 +160,7 @@ async function loadReleasePackages(repository, packageIds) {
     }
 
     for (const entry of manifest.packages ?? []) {
-      if (
-        !packageIdSet.has(entry.id) ||
-        !entry.file ||
-        entry.id in latest
-      ) {
+      if (!packageIdSet.has(entry.id) || !entry.file || entry.id in latest) {
         continue;
       }
       const asset = assets.find((item) => item.name === entry.file);
@@ -178,13 +176,12 @@ async function loadReleasePackages(repository, packageIds) {
 }
 
 export async function generatePackages() {
-  const repository =
-    process.env.GITHUB_REPOSITORY ?? 'Mushus/blender-addons';
+  const repository = process.env.GITHUB_REPOSITORY ?? 'Mushus/blender-addons';
   const { catalog, packageIds } = await loadCatalog();
   const local = await loadLocalPackages(catalog, packageIds);
   const { latest: fromReleases, suite } = await loadReleasePackages(
     repository,
-    packageIds,
+    packageIds
   );
 
   const packages = packageIds.map((packageId) => {

@@ -14,6 +14,30 @@ import AddonDownloadLink from '../../../../components/AddonDownloadLink.astro';
 
 **In-Between Shape Key** helps riggers and animators create intermediate shape keys (in-betweens) automatically by interpolating between base and target shape keys.
 
+```mermaid
+flowchart LR
+  subgraph Input["Controller Value (0.0 to 1.0)"]
+    V["Shape Key Value"]
+  end
+
+  subgraph Drivers["Automatic Driver Interpolation"]
+    T0["Basis / @0<br/>(Value = 0.0)"]
+    T50["In-between @50<br/>(Value = 0.5)"]
+    T100["Max Target @100<br/>(Value = 1.0)"]
+  end
+
+  subgraph Output["Mesh Deformation"]
+    M["Natural Non-linear Morph<br/>via In-Between Targets"]
+  end
+
+  V -->|0.0 to 0.5| T0
+  V -->|0.0 to 1.0| T50
+  V -->|0.5 to 1.0| T100
+  T0 --> M
+  T50 --> M
+  T100 --> M
+```
+
 ---
 
 ## UI Location
@@ -36,7 +60,7 @@ Targets are listed in position order. Their order in Blender's standard Shape Ke
 
 ### Key Operators
 
-| Operator                            | Description                                                  |
-| :---------------------------------- | :----------------------------------------------------------- |
-| **Convert to In-Between Shape Key** | Convert an ordinary Shape Key into an in-between controller  |
-| **Add to In-Between** | Choose an existing Shape Key in a dialog and add it at the controller's current value |
+| Operator                            | Description                                                                           |
+| :---------------------------------- | :------------------------------------------------------------------------------------ |
+| **Convert to In-Between Shape Key** | Convert an ordinary Shape Key into an in-between controller                           |
+| **Add to In-Between**               | Choose an existing Shape Key in a dialog and add it at the controller's current value |
