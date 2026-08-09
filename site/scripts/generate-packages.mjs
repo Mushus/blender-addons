@@ -1,11 +1,11 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SITE_ROOT = path.resolve(__dirname, '..');
 const REPO_ROOT = path.resolve(SITE_ROOT, '..');
-const PACKAGES_CATALOG = path.join(REPO_ROOT, 'release', 'packages.json');
+const PYPROJECT_PATH = path.join(REPO_ROOT, 'pyproject.toml');
 const OUTPUT = path.join(SITE_ROOT, 'src', 'data', 'packages.json');
 const INDEX_OUTPUT = path.join(SITE_ROOT, 'public', 'index.json');
 const REPOSITORY_URL =
@@ -76,15 +76,87 @@ function formatVersion(value) {
   return value.join('.');
 }
 
+function parsePyprojectDefaults(text) {
+  const getString = (key) => {
+    const m = text.match(new RegExp(`${key}\\s*=\\s*"([^"]*)"`));
+    return m ? m[1] : null;
+  };
+  const suiteId = getString('suite_id') ?? 'blender_addon_suite';
+  const blenderTarget = getString('blender_target') ?? '4.2';
+  // Extract extension_defaults block
+  const sec = text.match(/\[tool\.blender-addons\.extension_defaults\]([\s\S]*?)(?:\n\[|\s*$)/);
+  let maintainer = null;
+  let license = null;
+  if (sec) {
+    const block = sec[1];
+    const mMaint = block.match(/maintainer\s*=\s*"([^"]*)"/);
+    if (mMaint) maintainer = mMaint[1];
+    const mLic = block.match(/license\s*=\s*\[(.*?)\]/s);
+    if (mLic) {
+      license = [...mLic[1].matchAll(/"([^"]*)"/g)].map((m) => m[1]);
+    }
+  }
+  const extensionDefaults = {};
+  if (maintainer) extensionDefaults.maintainer = maintainer;
+  if (license) extensionDefaults.license = license;
+  if (Object.keys(extensionDefaults).length === 0) {
+    extensionDefaults.maintainer = 'Mushus';
+    extensionDefaults.license = ['SPDX:GPL-3.0-or-later'];
+  }
+  return { suiteId, blenderTarget, extensionDefaults };
+}
+
 /**
  * @returns {Promise<{ catalog: any, packageIds: string[] }>}
  */
 async function loadCatalog() {
-  const catalog = JSON.parse(await readFile(PACKAGES_CATALOG, 'utf8'));
-  const packages = catalog.packages;
-  if (!Array.isArray(packages) || packages.length === 0) {
-    throw new Error(`${PACKAGES_CATALOG} has no packages`);
+  const pyprojectText = await readFile(PYPROJECT_PATH, 'utf8');
+  const { suiteId, blenderTarget, extensionDefaults } = parsePyprojectDefaults(pyprojectText);
+
+  const addonsDir = path.join(REPO_ROOT, 'addons');
+  const entries = await readdir(addonsDir, { withFileTypes: true });
+  const packages = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const pkgDir = path.join(addonsDir, entry.name);
+    let pkgJsonPath = path.join(pkgDir, 'addon.json');
+    try {
+      await readFile(pkgJsonPath, 'utf8');
+    } catch {
+      // fallback to package.json
+      pkgJsonPath = path.join(pkgDir, 'package.json');
+      try {
+        await readFile(pkgJsonPath, 'utf8');
+      } catch {
+        continue;
+      }
+    }
+    const data = JSON.parse(await readFile(pkgJsonPath, 'utf8'));
+    const id = data.id ?? entry.name;
+    packages.push({
+      id,
+      source: `addons/${entry.name}`,
+      status: data.status ?? 'stable',
+      group_id: data.group_id,
+      group_label: data.group_label,
+      blender_target: data.blender_target,
+      extension: data.extension,
+    });
   }
+  if (packages.length === 0) {
+    throw new Error(`No packages found in ${addonsDir} (expected addon.json per addon)`);
+  }
+  packages.sort((a, b) => a.id.localeCompare(b.id));
+  const catalog = {
+    suite_id: suiteId,
+    suiteId,
+    blender_target: blenderTarget,
+    blenderTarget,
+    extension_defaults: extensionDefaults,
+    extensionDefaults,
+    packages,
+  };
+  // Provide both snake_case and camelCase for callers
   return {
     catalog,
     packageIds: packages.map((pkg) => pkg.id),

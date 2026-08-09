@@ -20,17 +20,16 @@ from zip_utils import iter_files
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 BUILD = ROOT / "build"
-PACKAGES_JSON = ROOT / "release" / "packages.json"
 SCAFFOLD_ROOT = ROOT / "scaffold"
 
 
 def _write_extension_manifest(package: dict, package_dir: Path, catalog: dict) -> None:
     extension_meta = package.get("extension")
     if not isinstance(extension_meta, dict):
-        raise SystemExit(f"{package['id']}: missing extension metadata in release/packages.json")
+        raise SystemExit(f"{package['id']}: missing extension metadata in addon.json")
     defaults = catalog.get("extension_defaults") or {}
     if not isinstance(defaults, dict):
-        raise SystemExit("release/packages.json extension_defaults must be an object")
+        raise SystemExit("pyproject.toml [tool.blender-addons.extension_defaults] must be a table")
     bl_info = parse_bl_info(package_dir / "__init__.py")
     manifest = build_manifest_dict(
         package_id=package["id"],
@@ -43,15 +42,9 @@ def _write_extension_manifest(package: dict, package_dir: Path, catalog: dict) -
 
 
 def _stable_packages(catalog: dict, package_ids: list[str] | None) -> list[dict]:
-    selected = [
-        package
-        for package in catalog["packages"]
-        if package.get("status") == "stable"
-        and (not package_ids or package["id"] in package_ids)
-    ]
-    if not selected:
-        raise SystemExit("No stable packages selected.")
-    return selected
+    from package_catalog import load_stable_packages
+
+    return load_stable_packages(catalog, package_ids)
 
 
 def _zip_directory(source_dir: Path, zip_path: Path) -> None:
@@ -69,7 +62,9 @@ def make_zips(
     suite_package_ids: list[str] | None = None,
     skip_suite: bool = False,
 ) -> list[Path]:
-    catalog = json.loads(PACKAGES_JSON.read_text(encoding="utf-8"))
+    from package_catalog import load_catalog
+
+    catalog = load_catalog(ROOT)
     selected = _stable_packages(catalog, package_ids)
     suite_selected = selected
     if suite_package_ids:
@@ -91,7 +86,10 @@ def make_zips(
         suite_dir = BUILD / suite_id
         (suite_dir / "addons").mkdir(parents=True)
         shutil.copy2(ROOT / "__init__.py", suite_dir / "__init__.py")
-        shutil.copy2(PACKAGES_JSON, suite_dir / "packages.json")
+        # Synthesize packages.json for the suite from the catalog
+        (suite_dir / "packages.json").write_text(
+            json.dumps(catalog, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
         shutil.copy2(ROOT / "addons" / "__init__.py", suite_dir / "addons" / "__init__.py")
         for package in suite_selected:
             source = ROOT / package["source"]
@@ -142,7 +140,7 @@ def make_zips(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build add-on ZIP packages from release/packages.json.")
+    parser = argparse.ArgumentParser(description="Build add-on ZIP packages from addons/*/addon.json.")
     parser.add_argument("--package-id", action="append", dest="package_ids", default=[])
     parser.add_argument("--suite-package-id", action="append", dest="suite_package_ids", default=[])
     parser.add_argument("--skip-suite", action="store_true")

@@ -1,18 +1,6 @@
 {
   "packages": [
     {
-      "id": "uv_island_mask",
-      "version": "2026.08.04",
-      "group_id": "uv_utility",
-      "group_label": "UV Utility",
-      "blender_target": "4.2",
-      "changed": true,
-      "file": "uv_island_mask-2026.08.04-blender5.1.zip",
-      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.09/uv_island_mask-2026.08.04-blender5.1.zip",
-      "doc_link": "/addons/uv-island-mask/",
-      "name": "UV Island Mask"
-    },
-    {
       "id": "slide_relax",
       "version": "2026.08.07",
       "group_id": "mesh_utility",
@@ -25,16 +13,16 @@
       "name": "Slide Relax"
     },
     {
-      "id": "weight_smooth",
-      "version": "2026.08.08",
-      "group_id": "weight_utility",
-      "group_label": "Weight Utility",
+      "id": "uv_island_mask",
+      "version": "2026.08.04",
+      "group_id": "uv_utility",
+      "group_label": "UV Utility",
       "blender_target": "4.2",
       "changed": true,
-      "file": "weight_smooth-2026.08.08-blender5.1.zip",
-      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.09/weight_smooth-2026.08.08-blender5.1.zip",
-      "doc_link": "/addons/weight-smooth/",
-      "name": "Smooth Weight"
+      "file": "uv_island_mask-2026.08.04-blender5.1.zip",
+      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.09/uv_island_mask-2026.08.04-blender5.1.zip",
+      "doc_link": "/addons/uv-island-mask/",
+      "name": "UV Island Mask"
     },
     {
       "id": "weight_isolate",
@@ -45,6 +33,18 @@
       "blender_target": "4.2",
       "url": null,
       "doc_link": "/addons/weight-isolate/"
+    },
+    {
+      "id": "weight_smooth",
+      "version": "2026.08.08",
+      "group_id": "weight_utility",
+      "group_label": "Weight Utility",
+      "blender_target": "4.2",
+      "changed": true,
+      "file": "weight_smooth-2026.08.08-blender5.1.zip",
+      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.09/weight_smooth-2026.08.08-blender5.1.zip",
+      "doc_link": "/addons/weight-smooth/",
+      "name": "Smooth Weight"
     }
   ],
   "suite": {

@@ -84,7 +84,7 @@ Blender のランタイムテストは、埋め込み Blender MCP セッショ�
 
 ## 新しいツールを追加する場合
 
-1. `release/packages.json` にパッケージ情報を追加する
+1. `addons/<id>/addon.json` にパッケージ情報（`status` / `group_id` / `group_label` / `extension`）を追加する（グローバル設定は `pyproject.toml` の `[tool.blender-addons]`）
 2. `addons/<id>/tests/smoke_test.py` に background smoke test を追加する
 3. 必要に応じて `addons/<id>/tests/ui_smoke_test.py` を追加する
 4. [`blender-addon-coding-rules`](.agents/skills/blender-addon-coding-rules/SKILL.md) と [`blender-addon-testing`](.agents/skills/blender-addon-testing/SKILL.md) の契約に従って、再読み込み時の後始末を実装する

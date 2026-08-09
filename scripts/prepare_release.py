@@ -182,17 +182,17 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    catalog_path = PROJECT_ROOT / "release" / "packages.json"
-    with catalog_path.open("r", encoding="utf-8") as f:
-        catalog = json.load(f)
+    sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
+    from package_catalog import load_catalog  # noqa: E402
+
+    catalog = load_catalog(PROJECT_ROOT)
     extension_defaults = catalog.get("extension_defaults") or {}
     if not isinstance(extension_defaults, dict):
-        raise SystemExit("release/packages.json extension_defaults must be an object")
+        raise SystemExit("pyproject.toml [tool.blender-addons.extension_defaults] must be a table")
 
     blender_target = args.blender_target
     if not blender_target:
-        target_path = PROJECT_ROOT / "release" / "blender-target.txt"
-        blender_target = target_path.read_text(encoding="utf-8").strip()
+        blender_target = str(catalog.get("blender_target") or "4.2")
 
     today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y.%m.%d")
     gh_bin_early = None
@@ -227,8 +227,9 @@ def main() -> None:
             "scripts/make_zip.py",
             "scripts/extension_manifest.py",
             "scripts/prepare_release.py",
-            "release/packages.json",
-            "release/blender-target.txt",
+            "scripts/package_catalog.py",
+            "pyproject.toml",
+            "addons/*/addon.json",
         ]
         import fnmatch
 
@@ -279,7 +280,7 @@ def main() -> None:
             archive_size, archive_hash = sha256_file(dest_zip)
             extension_meta = package.get("extension")
             if not isinstance(extension_meta, dict):
-                raise SystemExit(f"{package['id']}: missing extension metadata in release/packages.json")
+                raise SystemExit(f"{package['id']}: missing extension metadata in addon.json")
             bl_info = parse_bl_info(PROJECT_ROOT / package["source"] / "__init__.py")
             manifest = build_manifest_dict(
                 package_id=package["id"],

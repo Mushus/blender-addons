@@ -1,0 +1,9 @@
+{
+  "status": "stable",
+  "group_id": "weight_utility",
+  "group_label": "Weight Utility",
+  "extension": {
+    "tagline": "Isolate the active bone weight on selected vertices",
+    "tags": ["Paint"]
+  }
+}

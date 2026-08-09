@@ -1,0 +1,9 @@
+{
+  "status": "stable",
+  "group_id": "weight_utility",
+  "group_label": "Weight Utility",
+  "extension": {
+    "tagline": "Smooth and normalize deform weights on selected vertices",
+    "tags": ["Paint"]
+  }
+}

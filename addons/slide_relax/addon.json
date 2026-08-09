@@ -1,0 +1,9 @@
+{
+  "status": "stable",
+  "group_id": "mesh_utility",
+  "group_label": "Mesh Utility",
+  "extension": {
+    "tagline": "Relax selected Edit Mode vertices along tangent planes",
+    "tags": ["Mesh"]
+  }
+}
