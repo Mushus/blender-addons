@@ -1,0 +1,11 @@
+{
+  "status": "stable",
+  "group_id": "uv_utility",
+  "group_label": "UV Utility",
+  "extension": {
+    "tags": ["UV"],
+    "permissions": {
+      "files": "Write baked UV mask images to disk"
+    }
+  }
+}

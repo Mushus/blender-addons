@@ -1,23 +1,31 @@
 from __future__ import annotations
 
 import argparse
-import json
 import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
 DIST = ROOT / "dist"
-PACKAGES_JSON = ROOT / "release" / "packages.json"
 
 
 def _stable_packages() -> list[dict]:
-    catalog = json.loads(PACKAGES_JSON.read_text(encoding="utf-8"))
+    import sys as _sys
+
+    _sys.path.insert(0, str(SCRIPTS))
+    from package_catalog import load_catalog
+
+    catalog = load_catalog(ROOT)
     return [package for package in catalog["packages"] if package.get("status") == "stable"]
 
 
 def _suite_id() -> str:
-    catalog = json.loads(PACKAGES_JSON.read_text(encoding="utf-8"))
+    import sys as _sys
+
+    _sys.path.insert(0, str(SCRIPTS))
+    from package_catalog import load_catalog
+
+    catalog = load_catalog(ROOT)
     return str(catalog["suite_id"])
 
 

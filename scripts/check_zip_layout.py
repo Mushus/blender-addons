@@ -1,23 +1,22 @@
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from package_catalog import load_catalog
 from scaffold_bundle import package_uses_scaffold_host
 from zip_utils import archive_names, iter_files
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
-PACKAGES_JSON = ROOT / "release" / "packages.json"
 SCAFFOLD_HOST = ROOT / "scaffold" / "embedded_host"
 
 
 def _stable_packages(catalog: dict) -> list[dict]:
     selected = [package for package in catalog["packages"] if package.get("status") == "stable"]
     if not selected:
-        raise SystemExit("No stable packages in release/packages.json")
+        raise SystemExit("No stable packages in addons/*/addon.json")
     return selected
 
 
@@ -51,7 +50,7 @@ def _assert_contains(zip_path: Path, expected: set[str]) -> None:
 
 
 def main() -> None:
-    catalog = json.loads(PACKAGES_JSON.read_text(encoding="utf-8"))
+    catalog = load_catalog(ROOT)
     packages = _stable_packages(catalog)
     suite_id = str(catalog["suite_id"])
 
@@ -61,7 +60,7 @@ def main() -> None:
         if not source.is_dir():
             raise SystemExit(f"Missing package source: {source}")
         if not isinstance(package.get("extension"), dict):
-            raise SystemExit(f"{package_id}: missing extension metadata in release/packages.json")
+            raise SystemExit(f"{package_id}: missing extension metadata in addon.json")
         expected = _expected_under(source, package_id)
         expected.add(f"{package_id}/blender_manifest.toml")
         _assert_contains(DIST / f"{package_id}.zip", expected)

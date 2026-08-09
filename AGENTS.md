@@ -5,7 +5,6 @@ As this project's AI coding tool, you must follow the additional conventions bel
 # Project
 
 Blender アドオン集約リポジトリ。未リリース扱いのため互換性は気にしない。
-`main` はリリース可能なツールのみ。開発は `work` / `feature/<tool>-<topic>`。
 
 # Docs
 

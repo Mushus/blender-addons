@@ -50,3 +50,11 @@ run-docker = "scripts.run_blender_docker:main"
 install-blender = "scripts.install_blender:main"
 doc-screenshots = "scripts.run_doc_screenshots:main"
 
+[tool.blender-addons]
+suite_id = "blender_addon_suite"
+blender_target = "4.2"
+
+[tool.blender-addons.extension_defaults]
+maintainer = "Mushus"
+license = ["SPDX:GPL-3.0-or-later"]
+

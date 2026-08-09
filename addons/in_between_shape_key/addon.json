@@ -1,0 +1,11 @@
+{
+  "status": "stable",
+  "group_id": "in_between_shape_key",
+  "group_label": "In Between Shape Key",
+  "extension": {
+    "tags": ["Import-Export"],
+    "permissions": {
+      "files": "Export FBX files with in-between shapes"
+    }
+  }
+}

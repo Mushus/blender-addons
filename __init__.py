@@ -19,9 +19,9 @@ _RUNTIME_KEY = "blender_addon_suite.runtime.v1"
 
 
 def _load_children() -> tuple[str, ...]:
-    """Stable package ids from packages.json (suite zip) or release/packages.json (repo)."""
+    """Stable package ids from packages.json (suite zip or repo root)."""
     root = Path(__file__).resolve().parent
-    candidates = (root / "packages.json", root / "release" / "packages.json")
+    candidates = (root / "packages.json",)
     for path in candidates:
         if not path.is_file():
             continue
@@ -34,9 +34,7 @@ def _load_children() -> tuple[str, ...]:
         if not children:
             raise RuntimeError(f"No stable packages in {path}")
         return children
-    raise RuntimeError(
-        "packages.json not found next to suite __init__.py or under release/"
-    )
+    raise RuntimeError("packages.json not found next to suite __init__.py")
 
 
 def _runtime_state() -> dict | None:

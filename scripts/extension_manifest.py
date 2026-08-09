@@ -7,6 +7,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+_TAGLINE_TRAILING_PUNCT = re.compile(r"[.!?。]+$")
+
 
 def parse_bl_info(init_path: Path) -> dict[str, Any]:
     content = init_path.read_text(encoding="utf-8")
@@ -51,12 +53,15 @@ def format_blender_version(version: tuple[int, ...]) -> str:
         raise ValueError(f"blender version too short: {version}")
     major, minor = version[0], version[1]
     patch = version[2] if len(version) > 2 else 0
+    # Extensions Platform requires Blender 4.2+.
+    if (major, minor, patch) < (4, 2, 0):
+        return "4.2.0"
     return f"{major}.{minor}.{patch}"
 
 
 def tagline_from_description(description: str) -> str:
     text = description.strip()
-    text = re.sub(r"[.!?。]+$", "", text).strip()
+    text = _TAGLINE_TRAILING_PUNCT.sub("", text).strip()
     if not text:
         raise ValueError("extension tagline is empty")
     if len(text) > 64:
@@ -114,7 +119,7 @@ def build_manifest_dict(
         cleaned: dict[str, str] = {}
         for key, reason in permissions.items():
             text = str(reason).strip()
-            text = re.sub(r"[.!?。]+$", "", text).strip()
+            text = _TAGLINE_TRAILING_PUNCT.sub("", text).strip()
             if not text:
                 raise ValueError(f"{package_id}: empty permission reason for {key}")
             if len(text) > 64:
