@@ -14,14 +14,6 @@ import AddonDownloadLink from '../../../../components/AddonDownloadLink.astro';
 
 **UV Island Mask** bakes a mask image from the UV faces selected in the UV Editor. Selected faces are baked as white and the remaining faces as black. You can set the image resolution and bake margin for texture workflows.
 
-```mermaid
-flowchart TD
-  Select["Select Faces / Islands in UV Editor"] --> TempObj["Create Temp Object<br/>Selected: White (Emit 1.0)<br/>Unselected: Black (Emit 0.0)"]
-  TempObj --> Bake["Execute Cycles EMIT Bake<br/>(Custom Resolution & Margin)"]
-  Bake --> Image["Generate Black & White Mask Image<br/>(Ready for texturing & shader masks)"]
-  Bake --> Cleanup["Automatically Clean Up Temp Mesh & Materials"]
-```
-
 ---
 
 ## UI Location

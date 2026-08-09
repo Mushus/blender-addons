@@ -45,6 +45,16 @@
       "doc_link": "/addons/weight-smooth/",
       "changed": true,
       "file": "weight_smooth-2026.08.08-blender5.1.zip"
+    },
+    {
+      "id": "weight_isolate",
+      "name": "Isolate Weight",
+      "group_id": "weight_utility",
+      "group_label": "Weight Utility",
+      "version": "2026.8.9",
+      "blender_target": "4.2.0",
+      "url": null,
+      "doc_link": "/addons/weight-isolate/"
     }
   ],
   "suite": {
