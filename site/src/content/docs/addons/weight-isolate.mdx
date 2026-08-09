@@ -1,0 +1,44 @@
+---
+title: Isolate Weight
+description: ウェイトペイントで選択頂点のアクティブボーンウェイトを1に分離し、他の変形ボーンウェイトを0にする
+---
+
+import { Badge } from '@astrojs/starlight/components';
+import AddonDownloadLink from '../../../components/AddonDownloadLink.astro';
+
+<Badge text="Blender 4.2+" /> <Badge text="Paint Tool" />
+
+<AddonDownloadLink packageId="weight_isolate" />
+
+## 概要
+
+**Isolate Weight** は、Weight Paint の選択頂点に対して、アクティブな頂点グループ（ボーン）のウェイトを `1` に、他の全ての変形ボーンウェイトを `0` に分離するアドオンです。ロックされた頂点グループは温存され、残り（`1 - locked_sum`）がアクティブボーンに割り当てられます。
+
+---
+
+## UIの配置場所
+
+3D ビューポート > ウェイトペイント (Weight Paint) > サイドバー (`N` キー) 内の `Edit` タブ（Weight Utility）。
+
+---
+
+## 主な機能と使い方
+
+1. メッシュに Armature Modifier（または Armature 親）があることを確認します。
+2. ウェイトペイントに切り替え、対象の頂点グループをアクティブにします（アクティブボーン）。
+3. サイドバーの **Isolate Weight** を実行します。
+   - 頂点選択マスクがオフのときは、先にオンにして終了します。頂点を選んで再度実行してください。
+4. 頂点を選択した状態で再度実行すると、選択頂点でアクティブボーンが `1`、他が `0` になります。
+
+### 変更されないもの
+
+- 未選択頂点のウェイト
+- ロック済み頂点グループのウェイト（温存され、残りがアクティブに割り当てられる）
+- ボーン変形以外の頂点グループ
+- 非表示（hide）頂点
+
+### エラー条件
+
+- Armature が見つからない
+- 変形ボーンの頂点グループが存在しない
+- アクティブボーンが未選択／存在しない／非変形ボーン／ロック中

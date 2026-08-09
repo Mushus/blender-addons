@@ -1,0 +1,44 @@
+---
+title: Isolate Weight
+description: Isolate the active bone weight to 1 and clear other deform bone weights on selected Weight Paint vertices.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+import AddonDownloadLink from '../../../../components/AddonDownloadLink.astro';
+
+<Badge text="Blender 4.2+" /> <Badge text="Paint Tool" />
+
+<AddonDownloadLink packageId="weight_isolate" lang="en" />
+
+## Overview
+
+**Isolate Weight** sets the active vertex group (bone) weight to `1` and all other deform bone weights to `0` on selected Weight Paint vertices. Locked vertex groups are preserved and the remainder (`1 - locked_sum`) is assigned to the active bone.
+
+---
+
+## UI Location
+
+- 3D Viewport > Weight Paint > Sidebar (`N` key) under the `Edit` tab (Weight Utility).
+
+---
+
+## Features & Usage
+
+1. Ensure the mesh has an Armature Modifier (or an Armature parent).
+2. Switch to Weight Paint and make the target vertex group active.
+3. Run **Isolate Weight** from the Sidebar.
+   - If vertex selection is off, the first click turns it on and stops. Select vertices, then run again.
+4. With vertices selected, run again to isolate the active bone to `1`.
+
+### Left unchanged
+
+- Weights on unselected vertices
+- Locked vertex groups (preserved; remainder goes to active)
+- Non-bone deform vertex groups
+- Hidden vertices
+
+### Errors
+
+- No Armature found
+- No deform bone vertex groups
+- No active bone selected / not found / not a deform bone / locked
