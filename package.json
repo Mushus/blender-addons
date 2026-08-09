@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "zip": "uv run python scripts/make_zip.py",
     "sync": "rulesync generate",
     "test": "echo \"Error: no test specified\" && exit 1",
     "site:dev": "pnpm --filter site dev",
