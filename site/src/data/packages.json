@@ -8,7 +8,7 @@
       "blender_target": "4.2",
       "changed": true,
       "file": "uv_island_mask-2026.08.04-blender5.1.zip",
-      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.08/uv_island_mask-2026.08.04-blender5.1.zip",
+      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.09/uv_island_mask-2026.08.04-blender5.1.zip",
       "doc_link": "/addons/uv-island-mask/",
       "name": "UV Island Mask"
     },
@@ -20,7 +20,7 @@
       "blender_target": "4.2",
       "changed": true,
       "file": "slide_relax-2026.08.07-blender5.1.zip",
-      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.08/slide_relax-2026.08.07-blender5.1.zip",
+      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.09/slide_relax-2026.08.07-blender5.1.zip",
       "doc_link": "/addons/slide-relax/",
       "name": "Slide Relax"
     },
@@ -32,7 +32,7 @@
       "blender_target": "4.2",
       "changed": true,
       "file": "weight_smooth-2026.08.08-blender5.1.zip",
-      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.08/weight_smooth-2026.08.08-blender5.1.zip",
+      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.09/weight_smooth-2026.08.08-blender5.1.zip",
       "doc_link": "/addons/weight-smooth/",
       "name": "Smooth Weight"
     },
@@ -48,7 +48,8 @@
     }
   ],
   "suite": {
-    "version": "2026-08-08T07:49:53.033903+00:00",
-    "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.08/blender_addon_suite-2026.08.08-blender5.1.zip"
-  }
+    "version": "2026-08-09T08:20:29.207341+00:00",
+    "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.09/blender_addon_suite-2026.08.09-blender5.1.zip"
+  },
+  "extensions_repository_url": "https://mushus.github.io/blender-addons/index.json"
 }

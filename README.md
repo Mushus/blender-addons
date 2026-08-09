@@ -9,6 +9,8 @@
 - [ダウンロード一覧（日本語）](https://mushus.github.io/blender-addons/downloads/)
 - [Download list (English)](https://mushus.github.io/blender-addons/en/downloads/)
 - [GitHub Releases](https://github.com/Mushus/blender-addons/releases/latest)
+- Extensions リポジトリ（個別アドオン）: `https://mushus.github.io/blender-addons/index.json`
+  （Blender: Edit > Preferences > Get Extensions > Repositories > Add Remote Repository）
 
 ## アドオン一覧
 
@@ -19,6 +21,15 @@
 | [**Smooth Weight**](https://mushus.github.io/blender-addons/addons/weight-smooth/) | ウェイトペイントで選択頂点の全ボーンウェイトをスムーズし正規化します |
 
 ## インストール
+
+### 拡張リポジトリ（推奨）
+
+1. Blender で **編集 > プリファレンス > Get Extensions** を開きます
+2. **Repositories > + > Add Remote Repository** に次の URL を追加します  
+   `https://mushus.github.io/blender-addons/index.json`
+3. 一覧からアドオンをインストールして有効化します
+
+### ZIP 手動インストール
 
 1. 上記から目的のアドオン ZIP をダウンロードします（**解凍しないでください**）
 2. Blender で **編集 > プリファレンス > アドオン** を開きます

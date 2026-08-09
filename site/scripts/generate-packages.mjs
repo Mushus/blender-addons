@@ -7,6 +7,9 @@ const SITE_ROOT = path.resolve(__dirname, '..');
 const REPO_ROOT = path.resolve(SITE_ROOT, '..');
 const PACKAGES_CATALOG = path.join(REPO_ROOT, 'release', 'packages.json');
 const OUTPUT = path.join(SITE_ROOT, 'src', 'data', 'packages.json');
+const INDEX_OUTPUT = path.join(SITE_ROOT, 'public', 'index.json');
+const REPOSITORY_URL =
+  'https://mushus.github.io/blender-addons/index.json';
 
 /**
  * @param {string} url
@@ -181,6 +184,41 @@ async function loadReleasePackages(repository, packageIds) {
   return { latest, suite };
 }
 
+/**
+ * @param {Record<string, any>} fromReleases
+ * @param {string[]} packageIds
+ */
+function buildExtensionsIndex(fromReleases, packageIds) {
+  /** @type {any[]} */
+  const data = [];
+  for (const packageId of packageIds) {
+    const published = fromReleases[packageId];
+    const extension = published?.extension;
+    const archiveUrl = published?.url;
+    if (!extension || !archiveUrl) {
+      continue;
+    }
+    if (
+      typeof extension.archive_size !== 'number' ||
+      typeof extension.archive_hash !== 'string' ||
+      !extension.archive_hash.startsWith('sha256:')
+    ) {
+      throw new Error(
+        `extension listing for ${packageId} is missing archive_size/archive_hash`
+      );
+    }
+    data.push({
+      ...extension,
+      archive_url: archiveUrl,
+    });
+  }
+  return {
+    version: 'v1',
+    blocklist: [],
+    data,
+  };
+}
+
 export async function generatePackages() {
   const repository = process.env.GITHUB_REPOSITORY ?? 'Mushus/blender-addons';
   const { catalog, packageIds } = await loadCatalog();
@@ -204,10 +242,21 @@ export async function generatePackages() {
     };
   });
 
-  const data = { packages, suite };
+  const data = {
+    packages,
+    suite,
+    extensions_repository_url: REPOSITORY_URL,
+  };
   await mkdir(path.dirname(OUTPUT), { recursive: true });
   await writeFile(OUTPUT, `${JSON.stringify(data, null, 2)}\n`, 'utf8');
   console.log(`Generated ${OUTPUT}`);
+
+  const index = buildExtensionsIndex(fromReleases, packageIds);
+  await mkdir(path.dirname(INDEX_OUTPUT), { recursive: true });
+  await writeFile(INDEX_OUTPUT, `${JSON.stringify(index, null, 2)}\n`, 'utf8');
+  console.log(
+    `Generated ${INDEX_OUTPUT} (${index.data.length} extension(s))`
+  );
   return data;
 }
 
