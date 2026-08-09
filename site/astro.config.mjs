@@ -1,12 +1,20 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import mermaid from 'astro-mermaid';
 import generatePackages from './integrations/generate-packages.mjs';
+
+const base =
+  process.env.BASE_PATH ??
+  (process.env.GITHUB_ACTIONS ? '/blender-addons' : '/');
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://mushus.github.io',
-  base: '/blender-addons',
+  base,
   integrations: [
+    mermaid({
+      autoTheme: true,
+    }),
     generatePackages(),
     starlight({
       title: 'Blender Add-ons',

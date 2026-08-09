@@ -34,26 +34,19 @@ def discover_lifecycle() -> list[tuple[str, Path, str]]:
 
 def discover_functional() -> list[tuple[str, Path, Path]]:
     """Return (label, script_path, zip_path) for tool functional smoke scripts."""
-    packages = {package["id"] for package in _stable_packages()}
+    packages = {package["id"]: package for package in _stable_packages()}
     targets: list[tuple[str, Path, Path]] = []
-    for script in sorted(SCRIPTS.glob("*_smoke_test.py")):
-        if script.name == "blender_smoke_test.py":
-            continue
-        if "_ui_" in script.stem or script.stem.endswith("_ui_smoke_test"):
-            continue
-        package_id = script.name.removesuffix("_smoke_test.py")
-        targets.append((f"functional:{package_id}", script, DIST / f"{package_id}.zip"))
+    for package_id, package in sorted(packages.items()):
+        source = ROOT / package["source"]
+        script = source / "tests" / "smoke_test.py"
+        if script.exists():
+            targets.append((f"functional:{package_id}", script, DIST / f"{package_id}.zip"))
 
     covered = {label.split(":", 1)[1] for label, _, _ in targets}
-    missing = sorted(packages - covered)
+    missing = sorted(set(packages.keys()) - covered)
     if missing:
         raise SystemExit(
-            "Stable packages missing scripts/<id>_smoke_test.py: " + ", ".join(missing)
-        )
-    extra = sorted(covered - packages)
-    if extra:
-        raise SystemExit(
-            "Smoke scripts without a stable package in release/packages.json: " + ", ".join(extra)
+            "Stable packages missing <source>/tests/smoke_test.py: " + ", ".join(missing)
         )
     return targets
 

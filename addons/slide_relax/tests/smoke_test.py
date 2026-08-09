@@ -9,7 +9,10 @@ from pathlib import Path
 import bmesh
 import bpy
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+ROOT = Path(__file__).resolve().parents[3]
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 from zip_utils import extract_zip
 
 

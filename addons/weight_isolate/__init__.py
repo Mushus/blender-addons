@@ -14,16 +14,16 @@ if (_REPO_ROOT / "scaffold" / "embedded_host").is_dir():
 import bpy
 
 bl_info = {
-    "name": "Smooth Weight",
+    "name": "Isolate Weight",
     "author": "Mushus",
-    "version": (2026, 8, 8),
+    "version": (2026, 8, 9),
     "blender": (4, 2, 0),
     "location": "3D View > Sidebar > Edit",
-    "description": "Smooth and normalize all deform bone weights on selected Weight Paint vertices.",
+    "description": "Set active bone weight to 1 and other deform bone weights to 0 on selected Weight Paint vertices.",
     "category": "Paint",
 }
 
-_tool_id = "weight_smooth"
+_tool_id = "weight_isolate"
 
 # reload 順: 依存先を先に読む。runtime は register 側で別途取り直す。
 # scaffold.* は make_zip 時に embedded_host.* へ書き換えられ、_qualname 経由で __package__ 配下になる。
@@ -69,7 +69,7 @@ def register() -> None:
     runtime_mod = import_module(_qualname("runtime"))
 
     host, operator_module, properties_module, ui_module = _bindings()
-    classes = (properties_module.WS_Settings, operator_module.WS_OT_smooth)
+    classes = (properties_module.WI_Settings, operator_module.WI_OT_isolate)
 
     # 以後の登録ハンドルはすべて state に保存し、uninstall はこれだけを見る。
     state = runtime_mod.begin_state()
@@ -77,8 +77,8 @@ def register() -> None:
         bpy.utils.register_class(cls)
         state["classes"].append(cls)
 
-    bpy.types.Scene.weight_smooth = bpy.props.PointerProperty(type=properties_module.WS_Settings)
-    state["scene_prop"] = "weight_smooth"
+    bpy.types.Scene.weight_isolate = bpy.props.PointerProperty(type=properties_module.WI_Settings)
+    state["scene_prop"] = "weight_isolate"
     state["tool_id"] = _tool_id
     state["owner_id"] = __package__
     # host.unregister_tool は reload 後に差し替わるため、登録時点の関数を保持する。
@@ -88,10 +88,10 @@ def register() -> None:
         host.ToolSpec(
             tool_id=_tool_id,
             owner_id=__package__,
-            display_name="Smooth Weight",
+            display_name="Isolate Weight",
             group_id="weight_utility",
             group_label="Weight Utility",
-            sort_order=100,
+            sort_order=200,
             space_type="VIEW_3D",
             region_type="UI",
             category="Edit",

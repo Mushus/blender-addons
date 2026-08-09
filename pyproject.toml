@@ -20,10 +20,10 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["addons", "blender_addon_suite"]
+known-first-party = ["addons", "blender_addon_suite", "scaffold"]
 
 [tool.basedpyright]
-include = ["__init__.py", "addons", "scripts"]
+include = ["__init__.py", "addons", "scripts", "scaffold"]
 exclude = ["build", "dist"]
 pythonVersion = "3.10"
 typeCheckingMode = "basic"

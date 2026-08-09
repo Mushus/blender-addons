@@ -4,7 +4,7 @@ import zipfile
 from collections.abc import Iterator
 from pathlib import Path
 
-SKIP_DIR_NAMES = frozenset({"__pycache__", ".git"})
+SKIP_DIR_NAMES = frozenset({"__pycache__", ".git", "tests"})
 SKIP_FILE_NAMES = frozenset({".DS_Store", "Thumbs.db"})
 SKIP_SUFFIXES = frozenset({".pyc", ".pyo"})
 

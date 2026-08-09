@@ -2,6 +2,14 @@ from __future__ import annotations
 
 import sys
 from importlib import import_module, reload
+from pathlib import Path
+
+# Repo checkout: addons/<tool> → parents[2] is the monorepo root (scaffold lives there).
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if (_REPO_ROOT / "scaffold" / "embedded_host").is_dir():
+    _root = str(_REPO_ROOT)
+    if _root not in sys.path:
+        sys.path.insert(0, _root)
 
 import bpy
 
@@ -18,40 +26,47 @@ bl_info = {
 _tool_id = "slide_relax"
 
 # reload 順: 依存先を先に読む。runtime は register 側で別途取り直す。
+# scaffold.* は make_zip 時に embedded_host.* へ書き換えられ、_qualname 経由で __package__ 配下になる。
 _CHILD_MODULES = (
     "runtime",
-    "embedded_host.registry",
-    "embedded_host.ui",
-    "embedded_host",
+    "scaffold.embedded_host.registry",
+    "scaffold.embedded_host.ui",
+    "scaffold.embedded_host",
     "properties",
     "operator",
     "ui",
 )
 
 
+def _qualname(module_name: str) -> str:
+    if module_name.startswith("scaffold."):
+        return module_name
+    return f"{__package__}.{module_name}"
+
+
 def _reload_child_modules() -> None:
     """再読込後の実装モジュールへ差し替える。"""
     for module_name in _CHILD_MODULES:
-        module = sys.modules.get(f"{__package__}.{module_name}")
+        module = sys.modules.get(_qualname(module_name))
         if module is not None:
             reload(module)
 
 
 def _bindings():
-    host = import_module(f"{__package__}.embedded_host")
-    operator_module = import_module(f"{__package__}.operator")
-    properties_module = import_module(f"{__package__}.properties")
-    ui_module = import_module(f"{__package__}.ui")
+    host = import_module(_qualname("scaffold.embedded_host"))
+    operator_module = import_module(_qualname("operator"))
+    properties_module = import_module(_qualname("properties"))
+    ui_module = import_module(_qualname("ui"))
     return host, operator_module, properties_module, ui_module
 
 
 def register() -> None:
     # モジュール再読込でローカル参照は消えるが、RNA / host 登録は残る。
     # 先に durable uninstall してから reload しないと二重登録になる。
-    runtime_mod = import_module(f"{__package__}.runtime")
+    runtime_mod = import_module(_qualname("runtime"))
     runtime_mod.uninstall()
     _reload_child_modules()
-    runtime_mod = import_module(f"{__package__}.runtime")
+    runtime_mod = import_module(_qualname("runtime"))
 
     host, operator_module, properties_module, ui_module = _bindings()
     classes = (properties_module.SR_Settings, operator_module.SR_OT_slide_relax)
@@ -88,7 +103,7 @@ def register() -> None:
 
 def unregister() -> None:
     # モジュールグローバルに依存しない。durable state だけを辿る。
-    runtime_mod = sys.modules.get(f"{__package__}.runtime")
+    runtime_mod = sys.modules.get(_qualname("runtime"))
     if runtime_mod is None:
-        runtime_mod = import_module(f"{__package__}.runtime")
+        runtime_mod = import_module(_qualname("runtime"))
     runtime_mod.uninstall()

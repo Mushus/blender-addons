@@ -1,5 +1,6 @@
+from scaffold.embedded_host.ui import draw_action_row, draw_settings_box
+
 from .context import is_uv_editor
-from .embedded_host.ui import draw_action_row, draw_settings_box
 from .operator import UVIM_OT_bake_mask
 
 
