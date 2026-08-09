@@ -21,12 +21,11 @@ C:\Program Files\Blender Foundation\Blender 5.2\5.2\blender.exe
 
 ## 環境構築（Windows PowerShell）
 
-リポジトリを取得して、開発用ブランチを作成します。
+リポジトリを取得します。
 
 ```powershell
 git clone https://github.com/mushus/blender-addons.git
 Set-Location .\blender-addons
-git switch -c work --track origin/work
 ```
 
 プロジェクト環境を構築します。
@@ -78,11 +77,8 @@ uv run run-docker --build --exec -- python ./scripts/run_ci.py
 
 Blender のランタイムテストは、埋め込み Blender MCP セッションではなく、Blender の `--background` モードまたは Docker 内で実行してください。詳細は [`blender-addon-testing`](.agents/skills/blender-addon-testing/SKILL.md) を参照してください。
 
-## ブランチと変更の流れ
+## 変更の流れ
 
-- `main` にはリリース準備済みの変更だけを入れます。
-- 通常の開発は `work` ブランチで行います。
-- ツール単位の作業は `feature/<tool>-<topic>` ブランチを使用します。
 - 実装後は静的チェック、ZIP 検証、Blender smoke test を通してから変更を提出します。
 - アドオンのバージョンは `addons/<tool>/__init__.py` の `bl_info["version"]` を更新します。
 
@@ -113,4 +109,7 @@ flowchart LR
 - リカバリ (Draft): Actions の **Draft Release** を `regenerate=true` で手動実行 → Release 削除 + タグを HEAD へ force-push + Draft 再作成 → 再度 publish。
 - リカバリ (Docs): build / deploy が失敗した workflow run で **Re-run failed jobs** を実行する。成功表示なのにサイトが古い場合も、Actions の **Deploy Documentation Site to GitHub Pages** を `main` で Run workflow する（release イベントは tag SHA の重複で Pages が旧 artifact のまま成功扱いになることがある）。サイト本体は `main` から、ダウンロード情報は公開済み Release から生成される。
 
-ダウンロード一覧は `site` の Astro 起動時に、公開済み Release の manifest から ZIP URL を生成する。Release を publish するまで、サイトのダウンロード URL は更新されない。
+ダウンロード一覧と Extensions 用 `index.json` は `site` の Astro 起動時に、公開済み Release の manifest から生成する。Release を publish するまで、サイトのダウンロード URL / 拡張リポジトリ一覧は更新されない。
+
+Extensions リポジトリ URL: `https://mushus.github.io/blender-addons/index.json`  
+（個別アドオンのみ。Suite は載せない。初回 publish 後の Get Extensions 導入確認は手動でよい。）

@@ -6,7 +6,6 @@ root: true
 # Project
 
 Blender アドオン集約リポジトリ。未リリース扱いのため互換性は気にしない。
-`main` はリリース可能なツールのみ。開発は `work` / `feature/<tool>-<topic>`。
 
 # Docs
 

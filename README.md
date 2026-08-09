@@ -39,4 +39,4 @@
 
 ## 開発者向け
 
-環境構築・検証・ブランチ運用は [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
+環境構築・検証は [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
