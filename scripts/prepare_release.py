@@ -10,6 +10,15 @@ import sys
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from extension_manifest import (  # noqa: E402
+    build_manifest_dict,
+    index_entry_from_manifest,
+    package_website,
+    parse_bl_info,
+    sha256_file,
+)
+
 
 def run_command(cmd: list[str], cwd: pathlib.Path = PROJECT_ROOT, check: bool = True) -> str:
     result = subprocess.run(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=check)
@@ -151,6 +160,9 @@ def main() -> None:
     catalog_path = PROJECT_ROOT / "release" / "packages.json"
     with catalog_path.open("r", encoding="utf-8") as f:
         catalog = json.load(f)
+    extension_defaults = catalog.get("extension_defaults") or {}
+    if not isinstance(extension_defaults, dict):
+        raise SystemExit("release/packages.json extension_defaults must be an object")
 
     blender_target = args.blender_target
     if not blender_target:
@@ -186,6 +198,7 @@ def main() -> None:
         suite_trigger_patterns = [
             "addons/*/embedded_host/*",
             "scripts/make_zip.py",
+            "scripts/extension_manifest.py",
             "scripts/prepare_release.py",
             "release/packages.json",
             "release/blender-target.txt",
@@ -232,22 +245,44 @@ def main() -> None:
         version = parse_package_version(package["source"])
         is_changed = package["id"] in changed_ids
         filename = None
+        extension_listing = None
         if is_changed:
             source_zip = dist_dir / f"{package['id']}.zip"
             filename = f"{package['id']}-{version}-blender{blender_target}.zip"
-            shutil.copy(source_zip, release_dir / filename)
+            dest_zip = release_dir / filename
+            shutil.copy(source_zip, dest_zip)
+            archive_size, archive_hash = sha256_file(dest_zip)
+            extension_meta = package.get("extension")
+            if not isinstance(extension_meta, dict):
+                raise SystemExit(f"{package['id']}: missing extension metadata in release/packages.json")
+            bl_info = parse_bl_info(PROJECT_ROOT / package["source"] / "__init__.py")
+            manifest = build_manifest_dict(
+                package_id=package["id"],
+                bl_info=bl_info,
+                extension_meta=extension_meta,
+                defaults=extension_defaults,
+                website=package_website(package["id"]),
+            )
+            extension_listing = index_entry_from_manifest(
+                manifest,
+                archive_url="",  # filled by the docs site from the Release asset URL
+                archive_size=archive_size,
+                archive_hash=archive_hash,
+            )
+            del extension_listing["archive_url"]
 
-        manifest_packages.append(
-            {
-                "id": package["id"],
-                "version": version,
-                "group_id": package.get("group_id"),
-                "group_label": package.get("group_label"),
-                "blender_target": blender_target,
-                "changed": is_changed,
-                "file": filename,
-            }
-        )
+        entry = {
+            "id": package["id"],
+            "version": version,
+            "group_id": package.get("group_id"),
+            "group_label": package.get("group_label"),
+            "blender_target": blender_target,
+            "changed": is_changed,
+            "file": filename,
+        }
+        if extension_listing is not None:
+            entry["extension"] = extension_listing
+        manifest_packages.append(entry)
 
     suite_file = None
     if suite_changed:
@@ -278,7 +313,8 @@ def main() -> None:
             "",
             "## Included Downloads",
             "",
-            "- GitHub Pages contains the current download index.",
+            "- GitHub Pages hosts the download list and the Extensions repository index:",
+            "- https://mushus.github.io/blender-addons/index.json",
             "",
             "## Compared With",
             "",
