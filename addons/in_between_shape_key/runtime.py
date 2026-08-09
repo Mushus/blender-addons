@@ -20,9 +20,13 @@ def begin_state() -> dict:
     state = {
         "classes": [],
         "handlers": [],
+        "timers": [],
+        "ui_sync_timer": None,
+        "group_tracks": {},
         "menus": [],
         "msgbus_owner": None,
         "object_props": [],
+        "rna_props": [],
         "export_class": None,
         "fbx_menu": {"custom": None, "original": None},
     }
@@ -45,6 +49,13 @@ def uninstall() -> None:
             if handler in handler_list:
                 handler_list.remove(handler)
         except (ValueError, TypeError, ReferenceError):
+            pass
+
+    for timer in state.get("timers", []):
+        try:
+            if bpy.app.timers.is_registered(timer):
+                bpy.app.timers.unregister(timer)
+        except (ValueError, RuntimeError, ReferenceError):
             pass
 
     owner = state.get("msgbus_owner")
@@ -75,6 +86,13 @@ def uninstall() -> None:
                 bpy.types.TOPBAR_MT_file_export.append(original)
         except (RuntimeError, ValueError, ReferenceError):
             pass
+
+    for owner, name in reversed(state.get("rna_props") or []):
+        if hasattr(owner, name):
+            try:
+                delattr(owner, name)
+            except (AttributeError, TypeError):
+                pass
 
     classes = list(state.get("classes") or [])
     export_class = state.get("export_class")

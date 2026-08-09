@@ -26,13 +26,17 @@ import AddonDownloadLink from '../../../../components/AddonDownloadLink.astro';
 
 ## Features & Usage
 
-1. Prepare a base shape key and a target shape key.
-2. Open the specials dropdown menu in the Shape Keys panel and select **Create In-Between Shape Key**.
-3. Set the desired blend factor to generate the new shape key.
+1. Select one ordinary Shape Key and run **Convert to In-Between Shape Key**. Its original shape becomes the initial `@100` key.
+2. Set the controller **Value** to the desired position, then use the down-arrow beside Value to select an existing Shape Key. The selected key is renamed to `Controller@Value`.
+3. Drag a target row's slider or enter a number to move the key between `0.00` and `1.00`. An `@0` target is applied when Value is zero. The last key's shape remains constant through 100%.
 
-### Parameters
+After conversion, the controller and target Shape Key values are driven and appear purple. Edit and keyframe the controller through Value in the In-Between panel.
 
-| Parameter        | Description                                                  |
-| :--------------- | :----------------------------------------------------------- |
-| **Blend Factor** | Interpolation ratio (e.g., 0.5 creates a 50% midpoint shape) |
-| **Target Key**   | The target shape key to blend towards                        |
+Targets are listed in position order. Their order in Blender's standard Shape Key list does not affect membership. Use the key icon at the left to select one, or the × button at the right to delete it.
+
+### Key Operators
+
+| Operator                            | Description                                                  |
+| :---------------------------------- | :----------------------------------------------------------- |
+| **Convert to In-Between Shape Key** | Convert an ordinary Shape Key into an in-between controller  |
+| **Add to In-Between** | Choose an existing Shape Key in a dialog and add it at the controller's current value |

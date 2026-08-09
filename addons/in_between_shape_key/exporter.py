@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 
 import bpy
@@ -41,6 +42,70 @@ def _standard_export(operator, context, filepath: str):
         operator.filepath = original_filepath
 
 
+def _has_addon_drivers(key) -> bool:
+    animation_data = key.animation_data
+    return animation_data is not None and any(
+        any(variable.name == "fbxi_controller" for variable in fcurve.driver.variables)
+        for fcurve in animation_data.drivers
+    )
+
+
+def _remove_addon_drivers(key) -> None:
+    animation_data = key.animation_data
+    if animation_data is None:
+        return
+    for fcurve in list(animation_data.drivers):
+        if not any(variable.name == "fbxi_controller" for variable in fcurve.driver.variables):
+            continue
+        block = next(
+            (
+                block
+                for block in key.key_blocks
+                if block.path_from_id("value") == fcurve.data_path
+            ),
+            None,
+        )
+        if block is None:
+            animation_data.drivers.remove(fcurve)
+        else:
+            block.driver_remove("value")
+
+
+@contextmanager
+def _driver_free_mesh_copies(context):
+    originals = []
+    copies = {}
+    try:
+        for obj in bpy.data.objects:
+            if obj.type != "MESH" or obj.data.shape_keys is None:
+                continue
+            original_key = obj.data.shape_keys
+            if not _has_addon_drivers(original_key):
+                continue
+            mesh_token = original_key.as_pointer()
+            copied_mesh = copies.get(mesh_token)
+            if copied_mesh is None:
+                copied_mesh = obj.data.copy()
+                copied_key = copied_mesh.shape_keys
+                if copied_key is None:
+                    raise RuntimeError(f"Shape Keys were not copied for FBX export: {obj.name}")
+                values = {block.name: float(block.value) for block in original_key.key_blocks}
+                _remove_addon_drivers(copied_key)
+                for block in copied_key.key_blocks:
+                    block.value = values[block.name]
+                copies[mesh_token] = copied_mesh
+            originals.append((obj, obj.data))
+            obj.data = copied_mesh
+        context.view_layer.update()
+        yield
+    finally:
+        for obj, original_mesh in originals:
+            obj.data = original_mesh
+        context.view_layer.update()
+        for copied_mesh in copies.values():
+            bpy.data.meshes.remove(copied_mesh)
+
+
 def export_with_inbetweens(operator, context) -> set[str]:
     if getattr(operator, "batch_mode", "OFF") != "OFF":
         operator.report({"ERROR"}, "Batch FBX export is not supported by Shape Key In-Between")
@@ -54,7 +119,8 @@ def export_with_inbetweens(operator, context) -> set[str]:
     fd, temporary = tempfile.mkstemp(prefix="fbxi-export-", suffix=".fbx", dir=str(destination.parent))
     os.close(fd)
     try:
-        result = _standard_export(operator, context, temporary)
+        with _driver_free_mesh_copies(context):
+            result = _standard_export(operator, context, temporary)
         if result != {"FINISHED"}:
             return result
         if _has_annotated_shape_keys():

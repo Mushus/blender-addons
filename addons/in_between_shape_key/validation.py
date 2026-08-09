@@ -28,8 +28,8 @@ def validate_shape_keys(key) -> ValidationResult:
             if spec is None:
                 errors.append(f"Invalid shape key name at index {index}: {name}")
                 continue
-            if not 1.0 <= spec.weight <= 100.0:
-                errors.append(f"Weight must be between 1 and 100: {name}")
+            if not 0.0 <= spec.weight <= 100.0:
+                errors.append(f"Weight must be between 0 and 100: {name}")
                 continue
             groups[spec.channel].append((index, spec.weight, name))
 
@@ -37,8 +37,6 @@ def validate_shape_keys(key) -> ValidationResult:
         weights = [weight for _index, weight, _name in entries]
         if len(weights) != len(set(weights)):
             errors.append(f"Duplicate in-between weight in {channel}")
-        if 100.0 not in weights:
-            errors.append(f"Missing @100 target in {channel}")
         if weights != sorted(weights):
             warnings.append(f"Targets in {channel} will be sorted by weight on export")
 

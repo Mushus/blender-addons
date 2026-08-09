@@ -7,7 +7,7 @@
       "group_label": "UV Utility",
       "version": "2026.08.04",
       "blender_target": "5.1",
-      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.07/uv_island_mask-2026.08.04-blender5.1.zip",
+      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.08/uv_island_mask-2026.08.04-blender5.1.zip",
       "doc_link": "/addons/uv-island-mask/",
       "changed": true,
       "file": "uv_island_mask-2026.08.04-blender5.1.zip"
@@ -17,7 +17,7 @@
       "name": "In Between Shape Key",
       "group_id": "in_between_shape_key",
       "group_label": "In Between Shape Key",
-      "version": "2026.8.6",
+      "version": "2026.8.9",
       "blender_target": "5.1.0",
       "url": null,
       "doc_link": "/addons/in-between-shape-key/"
@@ -29,7 +29,7 @@
       "group_label": "Mesh Utility",
       "version": "2026.08.07",
       "blender_target": "5.1",
-      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.07/slide_relax-2026.08.07-blender5.1.zip",
+      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.08/slide_relax-2026.08.07-blender5.1.zip",
       "doc_link": "/addons/slide-relax/",
       "changed": true,
       "file": "slide_relax-2026.08.07-blender5.1.zip"
@@ -39,14 +39,16 @@
       "name": "Smooth Weight",
       "group_id": "weight_utility",
       "group_label": "Weight Utility",
-      "version": "2026.8.8",
-      "blender_target": "5.1.0",
-      "url": null,
-      "doc_link": "/addons/weight-smooth/"
+      "version": "2026.08.08",
+      "blender_target": "5.1",
+      "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.08/weight_smooth-2026.08.08-blender5.1.zip",
+      "doc_link": "/addons/weight-smooth/",
+      "changed": true,
+      "file": "weight_smooth-2026.08.08-blender5.1.zip"
     }
   ],
   "suite": {
-    "version": "2026-08-07T11:03:54.436605+00:00",
-    "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.07/blender_addon_suite-2026.08.07-blender5.1.zip"
+    "version": "2026-08-08T07:49:53.033903+00:00",
+    "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.08/blender_addon_suite-2026.08.08-blender5.1.zip"
   }
 }

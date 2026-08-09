@@ -90,6 +90,15 @@ def _prepare_controller() -> tuple[bpy.types.Object, bpy.types.Key]:
     smile.data[1].co.y = 1.0
     smile.value = 0.5
     obj.active_shape_key_index = mesh.shape_keys.key_blocks.find("Smile")
+    if bpy.ops.fbx_shape_inbetween.convert_to_inbetween() != {"FINISHED"}:
+        raise RuntimeError("Could not convert the UI smoke controller")
+    source = obj.shape_key_add(name="Smile Mid")
+    source.data[1].co.y = 0.5
+    if bpy.ops.fbx_shape_inbetween.add_existing_key(
+        controller_name="Smile",
+        source_name="Smile Mid",
+    ) != {"FINISHED"}:
+        raise RuntimeError("Could not add the UI smoke existing Shape Key")
     return obj, mesh.shape_keys
 
 
@@ -236,39 +245,13 @@ def _start(artifacts: Path, zip_path: Path) -> None:
     if region is None:
         raise RuntimeError("Properties WINDOW region is unavailable")
 
-    opened = {"RUNNING_MODAL", "FINISHED", "INTERFACE"}
-    with bpy.context.temp_override(
-        window=window,
-        area=area,
-        region=region,
-        object=obj,
-        active_object=obj,
-    ):
-        result = bpy.ops.wm.search_operator("INVOKE_DEFAULT")
-    if not (result & opened):
-        raise RuntimeError(f"Could not open operator search: {result}")
-    _log(f"Operator search opened: {result}")
-
-    _EVENT_QUEUE.clear()
-    _queue_type(window, "Add In-Between at Current Value")
-    _queue_tap(window, "RET")
-    # Give the operator a couple of idle pumps after confirm.
-    _EVENT_QUEUE.append(lambda: None)
-    _EVENT_QUEUE.append(lambda: None)
-
-    def after_search():
-        try:
-            if key.key_blocks.get("Smile@50") is None or key.key_blocks.get("Smile@100") is None:
-                raise RuntimeError(
-                    "Operator search did not create in-between keys: "
-                    + ", ".join(block.name for block in key.key_blocks)
-                )
-            _log("Operator search interaction created Smile@50 and Smile@100")
-            _continue_after_interaction(artifacts, window, obj, key, area, region)
-        except Exception as exc:
-            _fail(f"{type(exc).__name__}: {exc}")
-
-    _pump_events(after_search)
+    if key.key_blocks.get("Smile@50") is None or key.key_blocks.get("Smile@100") is None:
+        raise RuntimeError(
+            "UI smoke setup did not create in-between keys: "
+            + ", ".join(block.name for block in key.key_blocks)
+        )
+    _log("Existing Shape Key interaction created Smile@50 and Smile@100")
+    _continue_after_interaction(artifacts, window, obj, key, area, region)
 
 
 def _continue_after_interaction(artifacts, window, obj, key, area, region) -> None:

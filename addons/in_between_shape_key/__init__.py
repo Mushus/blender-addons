@@ -10,7 +10,7 @@ from . import runtime
 bl_info = {
     "name": "In Between Shape Key",
     "author": "Mushus",
-    "version": (2026, 8, 6),
+    "version": (2026, 8, 9),
     "blender": (5, 1, 0),
     "location": "Properties > Data > Shape Keys; File > Export > FBX (.fbx)",
     "description": "Export Name@Weight Shape Keys as FBX in-between blend shapes.",
@@ -20,6 +20,7 @@ bl_info = {
 _CHILD_MODULES = (
     "runtime",
     "metadata",
+    "ui_state",
     "fbx_binary",
     "postprocess",
     "validation",
@@ -46,40 +47,55 @@ def _reload_children():
 def _bindings():
     operator = importlib.import_module(f"{__package__}.operator")
     ui = importlib.import_module(f"{__package__}.ui")
+    ui_state = importlib.import_module(f"{__package__}.ui_state")
     sync = importlib.import_module(f"{__package__}.sync")
-    return operator, ui, sync
+    return operator, ui, ui_state, sync
 
 
 def _mark_dirty(*_args):
     global _dirty
     if not _sync_guard:
         _dirty = True
+        _schedule_ui_sync()
+
+
+def _sync_ui_timer():
+    global _sync_guard
+    state = runtime.get_state()
+    if state is None:
+        return None
+    if _sync_guard:
+        state["ui_sync_timer"] = _sync_ui_timer
+        return 0.01
+    state["ui_sync_timer"] = None
+    _sync_guard = True
+    try:
+        sync = importlib.import_module(f"{__package__}.sync")
+        sync.sync_all(bpy.data, sync_ui=True)
+    finally:
+        _sync_guard = False
+    return None
+
+
+def _schedule_ui_sync() -> None:
+    state = runtime.get_state()
+    if state is None:
+        return
+    timer = state.get("ui_sync_timer")
+    if timer is not None and bpy.app.timers.is_registered(timer):
+        return
+    bpy.app.timers.register(_sync_ui_timer, first_interval=0.0)
+    state["ui_sync_timer"] = _sync_ui_timer
+    if _sync_ui_timer not in state["timers"]:
+        state["timers"].append(_sync_ui_timer)
 
 
 def _sync_handler(_scene, _depsgraph):
-    global _dirty, _sync_guard
+    global _dirty
     if _sync_guard:
         return
-    _dirty = False
-    _sync_guard = True
-    try:
-        sync = importlib.import_module(f"{__package__}.sync")
-        sync.sync_all(bpy.data)
-    finally:
-        _sync_guard = False
-
-
-def _frame_change_handler(_scene):
-    global _sync_guard
-    if _sync_guard:
-        return
-    _sync_guard = True
-    try:
-        sync = importlib.import_module(f"{__package__}.sync")
-        sync.sync_all(bpy.data)
-    finally:
-        _sync_guard = False
-    bpy.context.view_layer.update()
+    _dirty = True
+    _schedule_ui_sync()
 
 
 def _menu_func_export(self, _context):
@@ -101,16 +117,17 @@ def register():
     # runtime may have been reloaded; re-bind the package attribute.
     runtime_mod = importlib.import_module(f"{__package__}.runtime")
 
-    operator, ui, _sync = _bindings()
+    operator, ui, ui_state, _sync = _bindings()
     classes = (
+        ui_state.FBXI_PG_target_position,
+        ui.FBXI_MT_add_existing_key,
         ui.FBXI_PT_shape_key_inbetween,
         operator.FBXI_OT_rescan_groups,
         operator.FBXI_OT_validate,
-        operator.FBXI_OT_add_at_current_value,
+        operator.FBXI_OT_convert_to_inbetween,
+        operator.FBXI_OT_add_existing_key,
         operator.FBXI_OT_remove_target,
         operator.FBXI_OT_select_target,
-        operator.FBXI_OT_drag_target,
-        operator.FBXI_OT_move_target,
         operator.FBXI_OT_add_range,
         operator.FBXI_OT_remove_range,
     )
@@ -124,6 +141,17 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
         state["classes"].append(cls)
+
+    setattr(
+        bpy.types.WindowManager,
+        ui_state.TARGET_POSITIONS_PROP,
+        bpy.props.CollectionProperty(
+            type=ui_state.FBXI_PG_target_position,
+            options={"SKIP_SAVE"},
+        ),
+    )
+    state["rna_props"].append((bpy.types.WindowManager, ui_state.TARGET_POSITIONS_PROP))
+    _schedule_ui_sync()
 
     draw_specials = ui.draw_shape_key_specials
     for menu in (
@@ -144,13 +172,9 @@ def register():
         notify=_mark_dirty,
     )
     depsgraph_handlers = bpy.app.handlers.depsgraph_update_pre
-    frame_handlers = bpy.app.handlers.frame_change_post
     if _sync_handler not in depsgraph_handlers:
         depsgraph_handlers.append(_sync_handler)
         state["handlers"].append((depsgraph_handlers, _sync_handler))
-    if _frame_change_handler not in frame_handlers:
-        frame_handlers.append(_frame_change_handler)
-        state["handlers"].append((frame_handlers, _frame_change_handler))
 
     fbx_module = importlib.import_module("io_scene_fbx")
     original_menu = getattr(fbx_module, "menu_func_export", None)
