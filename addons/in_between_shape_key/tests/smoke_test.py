@@ -394,6 +394,53 @@ def _assert_zero_position_target():
     print("Zero-position target interpolation and slider regression test passed")
 
 
+def _assert_existing_canonical_names_sync_automatically():
+    from in_between_shape_key.sync import controller_value_property
+    from in_between_shape_key.ui_state import find_entry
+    from in_between_shape_key.validation import validate_shape_keys
+
+    # Background: a blend file can already contain a complete group named with
+    # the current 0..1 convention before the add-on scans the file.
+    # Arrange: create the controller and all canonical targets without using an
+    # add-on conversion operator.
+    mesh = bpy.data.meshes.new("FBXI Existing Names Mesh")
+    mesh.from_pydata([(0, 0, 0), (1, 0, 0), (0, 1, 0)], [], [(0, 1, 2)])
+    mesh.update()
+    obj = bpy.data.objects.new("FBXI Existing Names Object", mesh)
+    bpy.context.collection.objects.link(obj)
+    try:
+        bpy.context.view_layer.objects.active = obj
+        obj.select_set(True)
+        obj.shape_key_add(name="Basis")
+        obj.shape_key_add(name="Thickness")
+        for target_name in ("Thickness@0", "Thickness@0.5", "Thickness@1"):
+            obj.shape_key_add(name=target_name)
+
+        # Act: use the deferred name scan shared by registration, load_post, and
+        # depsgraph name-change synchronization.
+        import in_between_shape_key
+
+        in_between_shape_key._sync_ui_timer()
+        key = mesh.shape_keys
+
+        # Assert: names alone create the controller property, UI rows, and
+        # managed drivers without rewriting any Shape Key name.
+        assert validate_shape_keys(key).ok
+        assert controller_value_property("Thickness") in obj
+        for target_name in ("Thickness@0", "Thickness@0.5", "Thickness@1"):
+            assert key.key_blocks.get(target_name) is not None
+            assert find_entry(bpy.context.window_manager, obj, target_name) is not None
+        _assert_managed_drivers(
+            obj,
+            key,
+            "Thickness",
+            {"Thickness@0", "Thickness@0.5", "Thickness@1"},
+        )
+    finally:
+        bpy.data.objects.remove(obj, do_unlink=True)
+    print("Existing canonical names automatic synchronization test passed")
+
+
 def _assert_manual_group_rename_keeps_slider():
     from in_between_shape_key.ui import draw_shape_key_inbetween
     from in_between_shape_key.ui_state import find_entry
@@ -1071,6 +1118,7 @@ def main():
 
     _assert_position_slider_operations()
     _assert_zero_position_target()
+    _assert_existing_canonical_names_sync_automatically()
     _assert_manual_group_rename_keeps_slider()
     _assert_canonical_position_validation()
     _assert_add_reorder_and_rename_order_independence()
@@ -1086,6 +1134,7 @@ def main():
 
     # Reload-while-enabled must not leak Python/RNA registrations.
     baseline_depsgraph = len(bpy.app.handlers.depsgraph_update_pre)
+    baseline_load_post = len(bpy.app.handlers.load_post)
     baseline_frame = len(bpy.app.handlers.frame_change_post)
     result = bpy.ops.preferences.addon_enable(module="in_between_shape_key")
     if result != {"FINISHED"}:
@@ -1099,6 +1148,8 @@ def main():
         raise AssertionError("in_between_shape_key runtime key leaked")
     if len(bpy.app.handlers.depsgraph_update_pre) != baseline_depsgraph:
         raise AssertionError("depsgraph handlers leaked after reload-while-enabled")
+    if len(bpy.app.handlers.load_post) != baseline_load_post:
+        raise AssertionError("load_post handlers leaked after reload-while-enabled")
     if len(bpy.app.handlers.frame_change_post) != baseline_frame:
         raise AssertionError("frame handlers leaked after reload-while-enabled")
     if hasattr(bpy.types, "FBXI_PT_shape_key_inbetween"):

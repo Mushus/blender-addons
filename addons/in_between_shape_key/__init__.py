@@ -4,6 +4,7 @@ import importlib
 import sys
 
 import bpy
+from bpy.app.handlers import persistent
 
 from . import runtime
 
@@ -100,6 +101,11 @@ def _sync_handler(_scene, _depsgraph):
     _schedule_ui_sync()
 
 
+@persistent
+def _load_post_handler(_unused):
+    _schedule_ui_sync()
+
+
 def _menu_func_export(self, _context):
     export_class = _export_class
     state = runtime.get_state()
@@ -153,8 +159,6 @@ def register():
         ),
     )
     state["rna_props"].append((bpy.types.WindowManager, ui_state.TARGET_POSITIONS_PROP))
-    _schedule_ui_sync()
-
     draw_specials = ui.draw_shape_key_specials
     for menu in (
         getattr(bpy.types, "MESH_MT_shape_key_context_menu", None),
@@ -177,6 +181,10 @@ def register():
     if _sync_handler not in depsgraph_handlers:
         depsgraph_handlers.append(_sync_handler)
         state["handlers"].append((depsgraph_handlers, _sync_handler))
+    load_post_handlers = bpy.app.handlers.load_post
+    if _load_post_handler not in load_post_handlers:
+        load_post_handlers.append(_load_post_handler)
+        state["handlers"].append((load_post_handlers, _load_post_handler))
 
     fbx_module = importlib.import_module("io_scene_fbx")
     original_menu = getattr(fbx_module, "menu_func_export", None)
@@ -187,6 +195,9 @@ def register():
             pass
     bpy.types.TOPBAR_MT_file_export.append(_menu_func_export)
     state["fbx_menu"] = {"custom": _menu_func_export, "original": original_menu}
+    # Blender restricts bpy.data while an add-on is registering. A zero-delay
+    # timer performs the initial name scan as soon as registration completes.
+    _schedule_ui_sync()
 
 
 def unregister():
