@@ -5,6 +5,7 @@ import importlib
 import sys
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 
 import bpy
 
@@ -13,6 +14,37 @@ SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 from zip_utils import extract_zip
+
+HOST_KEY = "blender_addon_tools.embedded_host.v1"
+
+
+class RecordingLayout:
+    """Panel draw が生成した operator 行だけを記録する最小 UILayout 代替。"""
+
+    def __init__(self, operator_ids: list[str]) -> None:
+        self.operator_ids = operator_ids
+
+    def column(self, **_kwargs):
+        return self
+
+    def row(self, **_kwargs):
+        return self
+
+    def split(self, **_kwargs):
+        return self
+
+    def box(self):
+        return self
+
+    def prop(self, *_args, **_kwargs):
+        return None
+
+    def label(self, **_kwargs):
+        return None
+
+    def operator(self, operator_id: str, **_kwargs):
+        self.operator_ids.append(operator_id)
+        return SimpleNamespace()
 
 
 def parse_args():
@@ -169,25 +201,48 @@ def test_locked_and_missing_armature():
     cleanup(obj, arm)
 
 
+def test_visible_after_smooth_weight():
+    """背景: Weight Utility パネルは先に登録したツールの host が生成する。
+    なぜ: Smooth Weight の後から Isolate Weight を追加しても、既存パネルの描画対象へ入る契約を固定する。
+    """
+    host_state = bpy.app.driver_namespace[HOST_KEY]
+    group = host_state["groups"]["weight_utility"]
+    assert set(group["tool_ids"]) == {"weight_smooth", "weight_isolate"}
+
+    operator_ids: list[str] = []
+    panel_instance = SimpleNamespace(layout=RecordingLayout(operator_ids))
+    group["panel"].draw(panel_instance, bpy.context)
+    assert operator_ids == ["weight_smooth.smooth", "weight_isolate.isolate"]
+
+
 def main():
     options = parse_args()
     temp_dir = Path(tempfile.mkdtemp(prefix="blender-weight-isolate-smoke-"))
-    extract_zip(Path(options.zip).resolve(), temp_dir)
+    isolate_zip = Path(options.zip).resolve()
+    smooth_zip = isolate_zip.with_name("weight_smooth.zip")
+    if not smooth_zip.is_file():
+        raise FileNotFoundError(smooth_zip)
+    extract_zip(smooth_zip, temp_dir)
+    extract_zip(isolate_zip, temp_dir)
     sys.path.insert(0, str(temp_dir))
 
+    smooth_addon = importlib.import_module("weight_smooth")
     addon = importlib.import_module("weight_isolate")
+    smooth_addon.register()
     addon.register()
-    host_state = bpy.app.driver_namespace["blender_addon_tools.embedded_host.v1"]
+    host_state = bpy.app.driver_namespace[HOST_KEY]
     assert "weight_isolate" in host_state["tools"]
     assert "weight_utility" in host_state["groups"]
     clear_factory_mesh()
     try:
+        test_visible_after_smooth_weight()
         test_enable_vertex_select_then_isolate()
         test_locked_and_missing_armature()
     finally:
         if bpy.context.mode != "OBJECT":
             bpy.ops.object.mode_set(mode="OBJECT")
         addon.unregister()
+        smooth_addon.unregister()
     print("Isolate Weight functional smoke test passed")
 
 

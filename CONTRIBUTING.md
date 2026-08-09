@@ -60,7 +60,7 @@ Blender のロックファイルと背景実行を確認します。
 ```powershell
 uv lock --check
 uv run python scripts\run_background_smokes.py `
-  --blender "C:\Program Files\Blender Foundation\Blender 5.1\5.1\blender.exe"
+  --blender "C:\Program Files\Blender Foundation\Blender 5.2\5.2\blender.exe"
 ```
 
 ZIP 生成とレイアウト確認は次のコマンドです。

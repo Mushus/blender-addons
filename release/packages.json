@@ -1,6 +1,6 @@
 {
   "suite_id": "blender_addon_suite",
-  "blender_target": "5.1",
+  "blender_target": "4.2",
   "packages": [
     {
       "id": "uv_island_mask",

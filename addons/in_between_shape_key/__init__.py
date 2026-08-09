@@ -11,7 +11,7 @@ bl_info = {
     "name": "In Between Shape Key",
     "author": "Mushus",
     "version": (2026, 8, 9),
-    "blender": (5, 1, 0),
+    "blender": (4, 2, 0),
     "location": "Properties > Data > Shape Keys; File > Export > FBX (.fbx)",
     "description": "Export Name@Position Shape Keys as FBX in-between blend shapes.",
     "category": "Import-Export",

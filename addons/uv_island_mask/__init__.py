@@ -2,7 +2,7 @@ bl_info = {
     "name": "UV Island Mask",
     "author": "Mushus",
     "version": (2026, 8, 4),
-    "blender": (4, 0, 0),
+    "blender": (4, 2, 0),
     "location": "UV Editor > Sidebar > Edit",
     "description": "Bake a mask image from selected UV faces.",
     "category": "UV",
