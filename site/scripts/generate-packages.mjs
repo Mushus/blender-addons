@@ -67,6 +67,9 @@ function formatVersion(value) {
   if (value.some((part) => typeof part !== 'number' || Number.isNaN(part))) {
     throw new Error(`invalid version tuple: ${JSON.stringify(value)}`);
   }
+  if (value.length === 3 && value[0] >= 2000) {
+    return `${value[0]}.${String(value[1]).padStart(2, '0')}.${String(value[2]).padStart(2, '0')}`;
+  }
   return value.join('.');
 }
 
@@ -105,7 +108,10 @@ async function loadLocalPackages(catalog, packageIds) {
       group_id: pkg.group_id,
       group_label: pkg.group_label,
       version: formatVersion(readBlInfoValue(content, 'version')),
-      blender_target: formatVersion(readBlInfoValue(content, 'blender')),
+      blender_target:
+        pkg.blender_target ??
+        catalog.blender_target ??
+        formatVersion(readBlInfoValue(content, 'blender')),
       url: null,
       doc_link: `/addons/${pkg.id.replaceAll('_', '-')}/`,
     };
@@ -190,11 +196,11 @@ export async function generatePackages() {
       return local[packageId];
     }
     return {
-      ...local[packageId],
       ...published,
-      group_id: local[packageId].group_id,
-      group_label: local[packageId].group_label,
-      doc_link: local[packageId].doc_link,
+      ...local[packageId],
+      url: published.url ?? local[packageId].url ?? null,
+      file: published.file ?? local[packageId].file ?? null,
+      changed: published.changed ?? local[packageId].changed ?? false,
     };
   });
 

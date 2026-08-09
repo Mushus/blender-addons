@@ -10,7 +10,7 @@ PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Download and extract Blender for Windows.")
-    parser.add_argument("--version", required=True, help="Blender major/minor version (e.g. 5.1).")
+    parser.add_argument("--version", required=True, help="Blender major/minor version (e.g. 5.2).")
     parser.add_argument(
         "--install-root",
         default=str(PROJECT_ROOT / ".blender-cache"),

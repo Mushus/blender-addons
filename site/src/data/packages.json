@@ -2,47 +2,47 @@
   "packages": [
     {
       "id": "uv_island_mask",
-      "name": "UV Island Mask",
+      "version": "2026.08.04",
       "group_id": "uv_utility",
       "group_label": "UV Utility",
-      "version": "2026.08.04",
-      "blender_target": "5.1",
+      "blender_target": "4.2",
+      "changed": true,
+      "file": "uv_island_mask-2026.08.04-blender5.1.zip",
       "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.08/uv_island_mask-2026.08.04-blender5.1.zip",
       "doc_link": "/addons/uv-island-mask/",
-      "changed": true,
-      "file": "uv_island_mask-2026.08.04-blender5.1.zip"
+      "name": "UV Island Mask"
     },
     {
       "id": "slide_relax",
-      "name": "Slide Relax",
+      "version": "2026.08.07",
       "group_id": "mesh_utility",
       "group_label": "Mesh Utility",
-      "version": "2026.08.07",
-      "blender_target": "5.1",
+      "blender_target": "4.2",
+      "changed": true,
+      "file": "slide_relax-2026.08.07-blender5.1.zip",
       "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.08/slide_relax-2026.08.07-blender5.1.zip",
       "doc_link": "/addons/slide-relax/",
-      "changed": true,
-      "file": "slide_relax-2026.08.07-blender5.1.zip"
+      "name": "Slide Relax"
     },
     {
       "id": "weight_smooth",
-      "name": "Smooth Weight",
+      "version": "2026.08.08",
       "group_id": "weight_utility",
       "group_label": "Weight Utility",
-      "version": "2026.08.08",
-      "blender_target": "5.1",
+      "blender_target": "4.2",
+      "changed": true,
+      "file": "weight_smooth-2026.08.08-blender5.1.zip",
       "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.08/weight_smooth-2026.08.08-blender5.1.zip",
       "doc_link": "/addons/weight-smooth/",
-      "changed": true,
-      "file": "weight_smooth-2026.08.08-blender5.1.zip"
+      "name": "Smooth Weight"
     },
     {
       "id": "weight_isolate",
       "name": "Isolate Weight",
       "group_id": "weight_utility",
       "group_label": "Weight Utility",
-      "version": "2026.8.9",
-      "blender_target": "4.2.0",
+      "version": "2026.08.09",
+      "blender_target": "4.2",
       "url": null,
       "doc_link": "/addons/weight-isolate/"
     }
