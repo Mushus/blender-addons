@@ -113,4 +113,7 @@ flowchart LR
 - リカバリ (Draft): Actions の **Draft Release** を `regenerate=true` で手動実行 → Release 削除 + タグを HEAD へ force-push + Draft 再作成 → 再度 publish。
 - リカバリ (Docs): build / deploy が失敗した workflow run で **Re-run failed jobs** を実行する。成功表示なのにサイトが古い場合も、Actions の **Deploy Documentation Site to GitHub Pages** を `main` で Run workflow する（release イベントは tag SHA の重複で Pages が旧 artifact のまま成功扱いになることがある）。サイト本体は `main` から、ダウンロード情報は公開済み Release から生成される。
 
-ダウンロード一覧は `site` の Astro 起動時に、公開済み Release の manifest から ZIP URL を生成する。Release を publish するまで、サイトのダウンロード URL は更新されない。
+ダウンロード一覧と Extensions 用 `index.json` は `site` の Astro 起動時に、公開済み Release の manifest から生成する。Release を publish するまで、サイトのダウンロード URL / 拡張リポジトリ一覧は更新されない。
+
+Extensions リポジトリ URL: `https://mushus.github.io/blender-addons/index.json`  
+（個別アドオンのみ。Suite は載せない。初回 publish 後の Get Extensions 導入確認は手動でよい。）

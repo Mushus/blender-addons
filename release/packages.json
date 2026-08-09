@@ -1,41 +1,69 @@
 {
   "suite_id": "blender_addon_suite",
   "blender_target": "4.2",
+  "extension_defaults": {
+    "maintainer": "Mushus",
+    "license": ["SPDX:GPL-3.0-or-later"]
+  },
   "packages": [
     {
       "id": "uv_island_mask",
       "source": "addons/uv_island_mask",
       "status": "stable",
       "group_id": "uv_utility",
-      "group_label": "UV Utility"
+      "group_label": "UV Utility",
+      "extension": {
+        "tags": ["UV"],
+        "permissions": {
+          "files": "Write baked UV mask images to disk"
+        }
+      }
     },
     {
       "id": "in_between_shape_key",
       "source": "addons/in_between_shape_key",
       "status": "stable",
       "group_id": "in_between_shape_key",
-      "group_label": "In Between Shape Key"
+      "group_label": "In Between Shape Key",
+      "extension": {
+        "tags": ["Import-Export"],
+        "permissions": {
+          "files": "Export FBX files with in-between shapes"
+        }
+      }
     },
     {
       "id": "slide_relax",
       "source": "addons/slide_relax",
       "status": "stable",
       "group_id": "mesh_utility",
-      "group_label": "Mesh Utility"
+      "group_label": "Mesh Utility",
+      "extension": {
+        "tagline": "Relax selected Edit Mode vertices along tangent planes",
+        "tags": ["Mesh"]
+      }
     },
     {
       "id": "weight_smooth",
       "source": "addons/weight_smooth",
       "status": "stable",
       "group_id": "weight_utility",
-      "group_label": "Weight Utility"
+      "group_label": "Weight Utility",
+      "extension": {
+        "tagline": "Smooth and normalize deform weights on selected vertices",
+        "tags": ["Paint"]
+      }
     },
     {
       "id": "weight_isolate",
       "source": "addons/weight_isolate",
       "status": "stable",
       "group_id": "weight_utility",
-      "group_label": "Weight Utility"
+      "group_label": "Weight Utility",
+      "extension": {
+        "tagline": "Isolate the active bone weight on selected vertices",
+        "tags": ["Paint"]
+      }
     }
   ]
 }

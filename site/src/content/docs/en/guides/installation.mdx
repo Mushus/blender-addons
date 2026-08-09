@@ -7,7 +7,28 @@ import { Steps } from '@astrojs/starlight/components';
 
 Follow these steps to install and enable any of our Blender add-ons.
 
-## Installation Steps
+## Install from the Extensions Repository (Recommended)
+
+On Blender 4.2+, add this remote repository under Get Extensions to install and update add-ons from the list. The repository lists **individual add-ons only** (the Suite ZIP is not included).
+
+<Steps>
+
+1. **Open Preferences**
+   `Edit` ➔ `Preferences` ➔ **Get Extensions**
+
+2. **Add the Remote Repository**
+   1. Open **Repositories** ➔ **+** ➔ **Add Remote Repository**
+   2. Paste this URL:
+      `https://mushus.github.io/blender-addons/index.json`
+
+3. **Install Extensions**
+   Find the add-on in the list, then install and enable it.
+
+</Steps>
+
+---
+
+## Install from a ZIP File
 
 <Steps>
 
@@ -30,6 +51,12 @@ Follow these steps to install and enable any of our Blender add-ons.
 ---
 
 ## Updating / Uninstalling
+
+### Extensions repository
+
+Update from the Get Extensions list. To remove an extension, uninstall it from that list.
+
+### Manual ZIP installs
 
 To update an add-on to a newer version, we recommend removing the old version first:
 
