@@ -3,12 +3,19 @@ from __future__ import annotations
 import os
 import tempfile
 from collections import defaultdict
+from copy import deepcopy
+
+from bpy.app.translations import pgettext_iface
 
 from .fbx_binary import FBXBinary, Node, array_property, string_property
 from .metadata import parse_target_name
 
 _FBX_NAME_SEPARATOR = "\x00\x01"
 _FBX_SHAPE_SUFFIX = "SubDeformer"
+
+
+def _message(source: str, **values) -> str:
+    return pgettext_iface(source).format(**values)
 
 
 def _class_name(name: str) -> str:
@@ -31,7 +38,7 @@ def _objects_and_connections(scene: FBXBinary):
     objects = next((node for node in scene.roots if node.name == b"Objects"), None)
     connections = next((node for node in scene.roots if node.name == b"Connections"), None)
     if objects is None or connections is None:
-        raise ValueError("FBX is missing Objects or Connections")
+        raise ValueError(_message("FBX is missing Objects or Connections"))
     return objects, connections
 
 
@@ -55,6 +62,45 @@ def _set_child_property(node: Node, name: bytes, prop_index: int, prop) -> None:
         child.properties[prop_index] = prop
     else:
         child.properties[prop_index] = prop
+
+
+def _next_object_id(object_nodes: dict[int, Node]) -> int:
+    candidate = max(object_nodes, default=0) + 1
+    if candidate >= 2**63:
+        raise OverflowError("FBX object identifier space is exhausted")
+    return candidate
+
+
+def _append_flat_tail_target(
+    objects: Node,
+    connections: Node,
+    object_nodes: dict[int, Node],
+    channel_name: str,
+    highest_geometry_id: int,
+    canonical_channel_id: int,
+) -> int:
+    source = object_nodes[highest_geometry_id]
+    duplicate = deepcopy(source)
+    duplicate_id = _next_object_id(object_nodes)
+    duplicate.properties[0] = connections_id_property(duplicate_id)
+    source_name = str(source.prop(1, ""))
+    suffix = source_name.split(_FBX_NAME_SEPARATOR, 1)[1] if _FBX_NAME_SEPARATOR in source_name else "Geometry"
+    duplicate.properties[1] = string_property(
+        f"{channel_name}@1{_FBX_NAME_SEPARATOR}{suffix}"
+    )
+    objects.children.append(duplicate)
+    object_nodes[duplicate_id] = duplicate
+    connections.children.append(
+        Node(
+            b"C",
+            [
+                string_property("OO"),
+                connections_id_property(duplicate_id),
+                connections_id_property(canonical_channel_id),
+            ],
+        )
+    )
+    return duplicate_id
 
 
 def transform_scene(scene: FBXBinary) -> int:
@@ -98,22 +144,41 @@ def transform_scene(scene: FBXBinary) -> int:
             continue
         for channel_id in channels:
             for blendshape_id in channel_parents.get(channel_id, []):
-                by_blendshape[blendshape_id][spec.channel].append((spec.weight, geometry_id, channel_id))
+                by_blendshape[blendshape_id][spec.channel].append(
+                    (spec.position, geometry_id, channel_id)
+                )
 
     changed = 0
     remove_ids: set[int] = set()
     for blendshape_id, groups in by_blendshape.items():
         for channel_name, entries in groups.items():
             entries.sort(key=lambda item: item[0])
-            weights = [entry[0] for entry in entries]
-            if 100.0 not in weights:
-                raise ValueError(f"Missing @100 target in FBX channel {channel_name}")
-            if len(weights) != len(set(weights)):
-                raise ValueError(f"Duplicate in-between weight in FBX channel {channel_name}")
-            _canonical_weight, _canonical_geometry_id, canonical_channel_id = entries[-1]
+            positions = [entry[0] for entry in entries]
+            if len(positions) != len(set(positions)):
+                raise ValueError(
+                    _message(
+                        "Duplicate in-between position in FBX channel {channel}",
+                        channel=channel_name,
+                    )
+                )
+            if positions[-1] < 1.0:
+                _highest_position, highest_geometry_id, highest_channel_id = entries[-1]
+                flat_tail_geometry_id = _append_flat_tail_target(
+                    objects,
+                    connections,
+                    object_nodes,
+                    channel_name,
+                    highest_geometry_id,
+                    highest_channel_id,
+                )
+                entries.append((1.0, flat_tail_geometry_id, highest_channel_id))
+                positions.append(1.0)
+                changed += 1
+            _canonical_position, _canonical_geometry_id, canonical_channel_id = entries[-1]
             canonical_channel = object_nodes[canonical_channel_id]
             canonical_channel.properties[1] = string_property(_class_name(channel_name))
-            _set_child_property(canonical_channel, b"FullWeights", 0, array_property(weights))
+            full_weights = [position * 100.0 for position in positions]
+            _set_child_property(canonical_channel, b"FullWeights", 0, array_property(full_weights))
 
             # A controller Shape Key is intentionally empty and exists only to
             # drive the target values in Blender. It must not become an extra
@@ -125,7 +190,7 @@ def transform_scene(scene: FBXBinary) -> int:
                 remove_ids.add(controller_channel_id)
                 changed += 1
 
-            for _weight, geometry_id, channel_id in entries:
+            for _position, geometry_id, channel_id in entries:
                 if channel_id == canonical_channel_id:
                     continue
                 remove_ids.add(channel_id)
@@ -147,7 +212,7 @@ def transform_scene(scene: FBXBinary) -> int:
                         Node(b"C", [string_property("OO"), connections_id_property(geometry_id), connections_id_property(canonical_channel_id)])
                     )
                 changed += 1
-            for _weight, geometry_id, _channel_id in entries:
+            for _position, geometry_id, _channel_id in entries:
                 if geometry_id == entries[-1][1]:
                     continue
                 if not any(

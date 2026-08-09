@@ -13,12 +13,13 @@ bl_info = {
     "version": (2026, 8, 9),
     "blender": (5, 1, 0),
     "location": "Properties > Data > Shape Keys; File > Export > FBX (.fbx)",
-    "description": "Export Name@Weight Shape Keys as FBX in-between blend shapes.",
+    "description": "Export Name@Position Shape Keys as FBX in-between blend shapes.",
     "category": "Import-Export",
 }
 
 _CHILD_MODULES = (
     "runtime",
+    "i18n",
     "metadata",
     "ui_state",
     "fbx_binary",
@@ -45,11 +46,12 @@ def _reload_children():
 
 
 def _bindings():
+    i18n = importlib.import_module(f"{__package__}.i18n")
     operator = importlib.import_module(f"{__package__}.operator")
     ui = importlib.import_module(f"{__package__}.ui")
     ui_state = importlib.import_module(f"{__package__}.ui_state")
     sync = importlib.import_module(f"{__package__}.sync")
-    return operator, ui, ui_state, sync
+    return i18n, operator, ui, ui_state, sync
 
 
 def _mark_dirty(*_args):
@@ -117,7 +119,7 @@ def register():
     # runtime may have been reloaded; re-bind the package attribute.
     runtime_mod = importlib.import_module(f"{__package__}.runtime")
 
-    operator, ui, ui_state, _sync = _bindings()
+    i18n, operator, ui, ui_state, _sync = _bindings()
     classes = (
         ui_state.FBXI_PG_target_position,
         ui.FBXI_MT_add_existing_key,
@@ -128,11 +130,11 @@ def register():
         operator.FBXI_OT_add_existing_key,
         operator.FBXI_OT_remove_target,
         operator.FBXI_OT_select_target,
-        operator.FBXI_OT_add_range,
-        operator.FBXI_OT_remove_range,
     )
 
     state = runtime_mod.begin_state()
+    i18n.register()
+    state["i18n_unregister"] = i18n.unregister
     export_class = operator.make_export_operator()
     _export_class = export_class
     bpy.utils.register_class(export_class)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import bpy
+from bpy.app.translations import pgettext_iface
 
 from .operator import (
     FBXI_OT_add_existing_key,
@@ -13,11 +14,8 @@ from .ui_state import find_entry
 from .validation import validate_shape_keys
 
 
-def _weight(value, default=100.0):
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return default
+def _message(source: str, **values) -> str:
+    return pgettext_iface(source).format(**values)
 
 
 def _draw_target_row(layout, context, obj, key, member, active_name):
@@ -47,12 +45,8 @@ def _draw_target_row(layout, context, obj, key, member, active_name):
 
 
 def _draw_targets(layout, context, obj, key, group, active_name):
-    members = sorted(
-        group.get("members", []),
-        key=lambda member: _weight(member.get("weight", 100.0)),
-    )
     targets = layout.column(align=True)
-    for member in members:
+    for member in group.get("members", []):
         _draw_target_row(targets, context, obj, key, member, active_name)
 
 
@@ -60,7 +54,10 @@ def _draw_managed_group(layout, context, obj, key, group, active_name):
     controller_name = group.get("controller", "")
     controller = key.key_blocks.get(controller_name)
     if controller is None:
-        layout.label(text=f"Missing controller: {controller_name}", icon="ERROR")
+        layout.label(
+            text=_message("Missing controller: {controller}", controller=controller_name),
+            icon="ERROR",
+        )
         return
 
     box = layout.box()
@@ -113,7 +110,7 @@ def draw_shape_key_inbetween(self, context):
         multiple_selected = sum(bool(block.select) for block in key.key_blocks) > 1
         if active is not None and active_name != "Basis" and "@" not in active_name and not multiple_selected:
             box = layout.box()
-            box.label(text=f"Shape Key: {active_name}")
+            box.label(text=_message("Shape Key: {name}", name=active_name))
             box.operator(
                 FBXI_OT_convert_to_inbetween.bl_idname,
                 text="Convert to In-Between Shape Key",
@@ -204,10 +201,7 @@ class FBXI_MT_add_existing_key(bpy.types.Menu):
 
 
 def draw_shape_key_specials(self, context):
-    key = getattr(getattr(context, "object", None), "data", None)
-    key = getattr(key, "shape_keys", None)
-    multiple_selected = key is not None and sum(bool(block.select) for block in key.key_blocks) > 1
-    if not multiple_selected:
+    if FBXI_OT_convert_to_inbetween.poll(context):
         self.layout.operator(
             FBXI_OT_convert_to_inbetween.bl_idname,
             text="Convert to In-Between Shape Key",

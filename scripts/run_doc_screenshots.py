@@ -11,14 +11,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
 DIST = ROOT / "dist"
+ADDONS = ROOT / "addons"
 DEFAULT_OUTPUT = ROOT / "artifacts" / "doc-screenshots"
 RESULT_NAME = "doc_screenshot_result.txt"
 
 
 def discover(only: list[str] | None = None) -> list[tuple[str, Path, Path]]:
     targets: list[tuple[str, Path, Path]] = []
-    for script in sorted(SCRIPTS.glob("*_doc_screenshot.py")):
-        package_id = script.name.removesuffix("_doc_screenshot.py")
+    for script in sorted(ADDONS.glob("*/tests/doc_screenshot.py")):
+        package_id = script.parents[1].name
         if only and package_id not in only:
             continue
         targets.append((package_id, script, DIST / f"{package_id}.zip"))
@@ -131,7 +132,7 @@ def main() -> None:
         return
 
     if not targets:
-        raise SystemExit("No *_doc_screenshot.py entries found")
+        raise SystemExit("No doc_screenshot.py entries found")
 
     output_root = options.output if options.output.is_absolute() else ROOT / options.output
     for package_id, script, zip_path in targets:

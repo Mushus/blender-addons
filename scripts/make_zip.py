@@ -8,12 +8,14 @@ import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from scaffold_bundle import bundle_scaffold_into_package
 from zip_utils import iter_files
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 BUILD = ROOT / "build"
 PACKAGES_JSON = ROOT / "release" / "packages.json"
+SCAFFOLD_ROOT = ROOT / "scaffold"
 
 
 def _stable_packages(catalog: dict, package_ids: list[str] | None) -> list[dict]:
@@ -69,11 +71,21 @@ def make_zips(
         shutil.copy2(ROOT / "addons" / "__init__.py", suite_dir / "addons" / "__init__.py")
         for package in suite_selected:
             source = ROOT / package["source"]
+            dest = suite_dir / "addons" / Path(package["source"]).name
             shutil.copytree(
                 source,
-                suite_dir / "addons" / Path(package["source"]).name,
-                ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo", ".DS_Store", "Thumbs.db"),
+                dest,
+                ignore=shutil.ignore_patterns(
+                    "__pycache__",
+                    "*.pyc",
+                    "*.pyo",
+                    ".DS_Store",
+                    "Thumbs.db",
+                    "tests",
+                    "embedded_host",
+                ),
             )
+            bundle_scaffold_into_package(dest, SCAFFOLD_ROOT)
         zip_path = DIST / f"{suite_id}.zip"
         _zip_directory(suite_dir, zip_path)
         created.append(zip_path)
@@ -84,8 +96,17 @@ def make_zips(
         shutil.copytree(
             ROOT / package["source"],
             package_dir,
-            ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo", ".DS_Store", "Thumbs.db"),
+            ignore=shutil.ignore_patterns(
+                "__pycache__",
+                "*.pyc",
+                "*.pyo",
+                ".DS_Store",
+                "Thumbs.db",
+                "tests",
+                "embedded_host",
+            ),
         )
+        bundle_scaffold_into_package(package_dir, SCAFFOLD_ROOT)
         zip_path = DIST / f"{package_id}.zip"
         _zip_directory(package_dir, zip_path)
         created.append(zip_path)

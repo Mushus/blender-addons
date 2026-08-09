@@ -5,11 +5,13 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from scaffold_bundle import package_uses_scaffold_host
 from zip_utils import archive_names, iter_files
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 PACKAGES_JSON = ROOT / "release" / "packages.json"
+SCAFFOLD_HOST = ROOT / "scaffold" / "embedded_host"
 
 
 def _stable_packages(catalog: dict) -> list[dict]:
@@ -20,7 +22,20 @@ def _stable_packages(catalog: dict) -> list[dict]:
 
 
 def _expected_under(source: Path, zip_prefix: str) -> set[str]:
-    return {f"{zip_prefix}/{path.relative_to(source).as_posix()}" for path in iter_files(source)}
+    # Packager ignores any leftover local embedded_host/; scaffold host is injected instead.
+    expected = {
+        f"{zip_prefix}/{path.relative_to(source).as_posix()}"
+        for path in iter_files(source)
+        if "embedded_host" not in path.relative_to(source).parts
+    }
+    if package_uses_scaffold_host(source):
+        if not SCAFFOLD_HOST.is_dir():
+            raise SystemExit(f"Missing scaffold host: {SCAFFOLD_HOST}")
+        expected |= {
+            f"{zip_prefix}/embedded_host/{path.relative_to(SCAFFOLD_HOST).as_posix()}"
+            for path in iter_files(SCAFFOLD_HOST)
+        }
+    return expected
 
 
 def _assert_contains(zip_path: Path, expected: set[str]) -> None:
@@ -30,6 +45,9 @@ def _assert_contains(zip_path: Path, expected: set[str]) -> None:
     missing = sorted(expected - names)
     if missing:
         raise SystemExit(f"{zip_path}: missing {missing}")
+    extra_tests = [name for name in names if "/tests/" in name or name.endswith("/tests") or "_test.py" in name]
+    if extra_tests:
+        raise SystemExit(f"{zip_path}: forbidden test files included in package: {extra_tests}")
 
 
 def main() -> None:

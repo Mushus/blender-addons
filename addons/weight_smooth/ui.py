@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .embedded_host.ui import draw_action_row, draw_settings_box
+from scaffold.embedded_host.ui import draw_action_row, draw_settings_box
 from .operator import WS_OT_smooth
 
 

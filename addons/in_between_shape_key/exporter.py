@@ -6,11 +6,16 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import bpy
+from bpy.app.translations import pgettext_iface
 from bpy_extras.io_utils import axis_conversion
 from mathutils import Matrix
 
 from .postprocess import process_file
 from .validation import validate_all_meshes
+
+
+def _message(source: str, **values) -> str:
+    return pgettext_iface(source).format(**values)
 
 
 def _has_annotated_shape_keys() -> bool:
@@ -27,7 +32,7 @@ def _standard_export(operator, context, filepath: str):
     operator.filepath = filepath
     try:
         if not operator.filepath:
-            raise RuntimeError("FBX filepath is empty")
+            raise RuntimeError(_message("FBX filepath is empty"))
         global_matrix = (
             axis_conversion(to_forward=operator.axis_forward, to_up=operator.axis_up).to_4x4()
             if operator.use_space_transform
@@ -82,18 +87,20 @@ def _driver_free_mesh_copies(context):
             original_key = obj.data.shape_keys
             if not _has_addon_drivers(original_key):
                 continue
-            mesh_token = original_key.as_pointer()
-            copied_mesh = copies.get(mesh_token)
+            key_id = original_key.session_uid
+            copied_mesh = copies.get(key_id)
             if copied_mesh is None:
                 copied_mesh = obj.data.copy()
                 copied_key = copied_mesh.shape_keys
                 if copied_key is None:
-                    raise RuntimeError(f"Shape Keys were not copied for FBX export: {obj.name}")
+                    raise RuntimeError(
+                        _message("Shape Keys were not copied for FBX export: {name}", name=obj.name)
+                    )
                 values = {block.name: float(block.value) for block in original_key.key_blocks}
                 _remove_addon_drivers(copied_key)
                 for block in copied_key.key_blocks:
                     block.value = values[block.name]
-                copies[mesh_token] = copied_mesh
+                copies[key_id] = copied_mesh
             originals.append((obj, obj.data))
             obj.data = copied_mesh
         context.view_layer.update()
@@ -108,7 +115,10 @@ def _driver_free_mesh_copies(context):
 
 def export_with_inbetweens(operator, context) -> set[str]:
     if getattr(operator, "batch_mode", "OFF") != "OFF":
-        operator.report({"ERROR"}, "Batch FBX export is not supported by Shape Key In-Between")
+        operator.report(
+            {"ERROR"},
+            _message("Batch FBX export is not supported by Shape Key In-Between"),
+        )
         return {"CANCELLED"}
     validation = validate_all_meshes(bpy.data)
     if validation.errors:
@@ -128,10 +138,16 @@ def export_with_inbetweens(operator, context) -> set[str]:
         else:
             os.replace(temporary, destination)
     except Exception as exc:
-        operator.report({"ERROR"}, f"Shape Key In-Between export failed: {exc}")
+        operator.report(
+            {"ERROR"},
+            _message("Shape Key In-Between export failed: {error}", error=exc),
+        )
         return {"CANCELLED"}
     finally:
         if os.path.exists(temporary):
             os.remove(temporary)
-    operator.report({"INFO"}, f"Exported FBX with Shape Key In-Betweens: {destination}")
+    operator.report(
+        {"INFO"},
+        _message("Exported FBX with Shape Key In-Betweens: {path}", path=destination),
+    )
     return {"FINISHED"}

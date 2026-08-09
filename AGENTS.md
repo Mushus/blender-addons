@@ -23,6 +23,7 @@ Document: ./docs/index.md
 - Blender ランタイムテストは background モード。埋め込み Blender MCP では実行しない
 - テスト手順: [`docs/testing.md`](docs/testing.md)。全自動は Docker（`scripts/run_ci.py`）
 - 新規・更新ツールは [`docs/reload-safe-runtime.md`](docs/reload-safe-runtime.md) に従う（`runtime.py` + durable な `driver_namespace` uninstall）。`unregister()` をモジュールグローバルに依存させない
+- 新規・更新するアドオンは日本語UI翻訳を必須とし、`blender-addon-i18n` スキルに従って全ユーザー向け文字列とreload-safeな翻訳ライフサイクルを実装する
 
 # Workflow
 

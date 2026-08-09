@@ -112,7 +112,8 @@ def main() -> None:
                 changed_ids.append(package["id"])
 
         suite_trigger_patterns = [
-            "addons/*/embedded_host/*",
+            "scaffold/embedded_host/*",
+            "scripts/scaffold_bundle.py",
             "scripts/make_zip.py",
             "scripts/prepare_release.py",
             "release/packages.json",

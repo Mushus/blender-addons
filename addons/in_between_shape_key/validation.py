@@ -3,7 +3,13 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 
+from bpy.app.translations import pgettext_iface
+
 from .metadata import has_at_sign, parse_target_name
+
+
+def _message(source: str, **values) -> str:
+    return pgettext_iface(source).format(**values)
 
 
 @dataclass(frozen=True)
@@ -26,19 +32,23 @@ def validate_shape_keys(key) -> ValidationResult:
         if has_at_sign(name):
             spec = parse_target_name(name)
             if spec is None:
-                errors.append(f"Invalid shape key name at index {index}: {name}")
+                errors.append(
+                    _message("Invalid shape key name at index {index}: {name}", index=index, name=name)
+                )
                 continue
-            if not 0.0 <= spec.weight <= 100.0:
-                errors.append(f"Weight must be between 0 and 100: {name}")
+            if not 0.0 <= spec.position <= 1.0:
+                errors.append(_message("Position must be between 0 and 1: {name}", name=name))
                 continue
-            groups[spec.channel].append((index, spec.weight, name))
+            groups[spec.channel].append((index, spec.position, name))
 
     for channel, entries in groups.items():
-        weights = [weight for _index, weight, _name in entries]
-        if len(weights) != len(set(weights)):
-            errors.append(f"Duplicate in-between weight in {channel}")
-        if weights != sorted(weights):
-            warnings.append(f"Targets in {channel} will be sorted by weight on export")
+        positions = [position for _index, position, _name in entries]
+        if len(positions) != len(set(positions)):
+            errors.append(_message("Duplicate in-between position in {channel}", channel=channel))
+        if positions != sorted(positions):
+            warnings.append(
+                _message("Targets in {channel} will be sorted by position on export", channel=channel)
+            )
 
     return ValidationResult(tuple(errors), tuple(warnings))
 
@@ -51,9 +61,9 @@ def validate_all_meshes(bpy_data) -> ValidationResult:
         if obj.type != "MESH" or obj.data.shape_keys is None:
             continue
         key = obj.data.shape_keys
-        if key.as_pointer() in seen_keys:
+        if key.session_uid in seen_keys:
             continue
-        seen_keys.add(key.as_pointer())
+        seen_keys.add(key.session_uid)
         result = validate_shape_keys(key)
         errors.extend(f"{obj.name}: {message}" for message in result.errors)
         warnings.extend(f"{obj.name}: {message}" for message in result.warnings)

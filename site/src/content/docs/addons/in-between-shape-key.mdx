@@ -6,7 +6,7 @@ description: 既存のシェイプキー間に中間シェイプ（インビト�
 import { Badge } from '@astrojs/starlight/components';
 import AddonDownloadLink from '../../../components/AddonDownloadLink.astro';
 
-<Badge text="Blender 4.0+" /> <Badge text="Animation / Rigging" />
+<Badge text="Blender 5.1+" /> <Badge text="Animation / Rigging" />
 
 <AddonDownloadLink packageId="in_between_shape_key" />
 
@@ -22,8 +22,8 @@ flowchart LR
 
   subgraph Drivers["ドライバーによる区間自動補間"]
     T0["Basis / @0<br/>(Value = 0.0)"]
-    T50["中間キー @50<br/>(Value = 0.5)"]
-    T100["最大キー @100<br/>(Value = 1.0)"]
+    T50["中間キー @0.5<br/>(Value = 0.5)"]
+    T100["最大キー @1<br/>(Value = 1.0)"]
   end
 
   subgraph Output["メッシュ形状"]
@@ -50,9 +50,11 @@ flowchart LR
 
 ## 主な機能と使い方
 
-1. 通常のシェイプキーを1つ選択し、**Convert to In-Between Shape Key** を実行します。元の形状は初期キー `@100` へ移されます。
+1. 通常のシェイプキーを1つ選択し、**Convert to In-Between Shape Key** を実行します。元の形状は初期キー `@1` へ移されます。
 2. コントローラーの **Value** を目的の位置へ設定し、Value右の下向きボタンから既存のシェイプキーを選択して追加します。選択したキーは `Controller@Value` に変更されます。
-3. 各ターゲット行のスライダーをドラッグするか数値を入力して、キーの位置を `0.00`〜`1.00` の範囲で変更します。`@0` はValueが0のときに適用されます。最大位置のキー以降は100%まで同じ形状を維持します。
+3. 各ターゲット行のスライダーをドラッグするか数値を入力して、キーの位置を `0.000`〜`1.000` の範囲で変更します。名前にも同じ位置を使用します（例: `Smile@0.5`）。`@.5` や `@0.500` は無効です。ドラッグ中は表示だけを更新し、操作が止まると名前とドライバーへ反映します。`@0` はValueが0のときに適用されます。最大位置のキー以降は100%まで同じ形状を維持します。
+
+`@1` は必須ではありません。FBX出力時は最大位置の形状を位置1にも複製し、FBXの100%まで最後の形状を維持する区間を作成します。
 
 変換後のコントローラーとターゲットのShape Key Valueはドライバー制御され、紫色で表示されます。値の操作とキーフレーム設定はIn-BetweenパネルのValueで行います。
 

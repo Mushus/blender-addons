@@ -22,13 +22,15 @@ def begin_state() -> dict:
         "handlers": [],
         "timers": [],
         "ui_sync_timer": None,
-        "group_tracks": {},
+        "position_timer": None,
+        "pending_positions": {},
         "menus": [],
         "msgbus_owner": None,
         "object_props": [],
         "rna_props": [],
         "export_class": None,
         "fbx_menu": {"custom": None, "original": None},
+        "i18n_unregister": None,
     }
     bpy.app.driver_namespace[RUNTIME_KEY] = state
     return state
@@ -110,6 +112,13 @@ def uninstall() -> None:
                 delattr(bpy.types.Object, name)
             except (AttributeError, TypeError):
                 pass
+
+    i18n_unregister = state.get("i18n_unregister")
+    if i18n_unregister is not None:
+        try:
+            i18n_unregister()
+        except (RuntimeError, AttributeError):
+            pass
 
     clear_state()
 

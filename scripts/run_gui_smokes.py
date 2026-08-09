@@ -12,10 +12,13 @@ DIST = ROOT / "dist"
 ARTIFACTS = ROOT / "artifacts"
 
 
+ADDONS = ROOT / "addons"
+
+
 def discover_gui() -> list[tuple[str, Path, Path]]:
     targets: list[tuple[str, Path, Path]] = []
-    for script in sorted(SCRIPTS.glob("*_ui_smoke_test.py")):
-        package_id = script.name.removesuffix("_ui_smoke_test.py")
+    for script in sorted(ADDONS.glob("*/tests/ui_smoke_test.py")):
+        package_id = script.parents[1].name
         targets.append((f"gui:{package_id}", script, DIST / f"{package_id}.zip"))
     return targets
 
@@ -32,7 +35,7 @@ def _run(blender: str, script: Path, zip_path: Path, artifacts: Path, geometry: 
     zip_rel = str(zip_path.relative_to(ROOT)).replace("\\", "/")
     artifacts.mkdir(parents=True, exist_ok=True)
     artifacts_rel = str(artifacts.relative_to(ROOT)).replace("\\", "/")
-    package_id = script.name.removesuffix("_ui_smoke_test.py")
+    package_id = script.parents[1].name
     result_path = artifacts / f"{package_id}_ui_result.txt"
     if result_path.exists():
         result_path.unlink()

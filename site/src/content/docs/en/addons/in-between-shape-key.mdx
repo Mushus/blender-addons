@@ -6,7 +6,7 @@ description: Generate and interpolate in-between shapes between existing shape k
 import { Badge } from '@astrojs/starlight/components';
 import AddonDownloadLink from '../../../../components/AddonDownloadLink.astro';
 
-<Badge text="Blender 4.0+" /> <Badge text="Animation / Rigging" />
+<Badge text="Blender 5.1+" /> <Badge text="Animation / Rigging" />
 
 <AddonDownloadLink packageId="in_between_shape_key" lang="en" />
 
@@ -22,8 +22,8 @@ flowchart LR
 
   subgraph Drivers["Automatic Driver Interpolation"]
     T0["Basis / @0<br/>(Value = 0.0)"]
-    T50["In-between @50<br/>(Value = 0.5)"]
-    T100["Max Target @100<br/>(Value = 1.0)"]
+    T50["In-between @0.5<br/>(Value = 0.5)"]
+    T100["Max Target @1<br/>(Value = 1.0)"]
   end
 
   subgraph Output["Mesh Deformation"]
@@ -50,9 +50,11 @@ flowchart LR
 
 ## Features & Usage
 
-1. Select one ordinary Shape Key and run **Convert to In-Between Shape Key**. Its original shape becomes the initial `@100` key.
+1. Select one ordinary Shape Key and run **Convert to In-Between Shape Key**. Its original shape becomes the initial `@1` key.
 2. Set the controller **Value** to the desired position, then use the down-arrow beside Value to select an existing Shape Key. The selected key is renamed to `Controller@Value`.
-3. Drag a target row's slider or enter a number to move the key between `0.00` and `1.00`. An `@0` target is applied when Value is zero. The last key's shape remains constant through 100%.
+3. Drag a target row's slider or enter a number to move the key between `0.000` and `1.000`. Names use the same position (for example, `Smile@0.5`). `@.5` and `@0.500` are invalid. While dragging, only the displayed value changes; the name and drivers update after the interaction stops. An `@0` target is applied when Value is zero. The last key's shape remains constant through 100%.
+
+`@1` is optional. During FBX export, the highest target shape is duplicated at position 1, which encodes the flat final segment through FBX 100%.
 
 After conversion, the controller and target Shape Key values are driven and appear purple. Edit and keyframe the controller through Value in the In-Between panel.
 

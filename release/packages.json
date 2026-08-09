@@ -29,6 +29,13 @@
       "status": "stable",
       "group_id": "weight_utility",
       "group_label": "Weight Utility"
+    },
+    {
+      "id": "weight_isolate",
+      "source": "addons/weight_isolate",
+      "status": "stable",
+      "group_id": "weight_utility",
+      "group_label": "Weight Utility"
     }
   ]
 }

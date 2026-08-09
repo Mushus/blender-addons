@@ -45,3 +45,29 @@
   width: 100%;
   overflow: visible;
 }
+
+/* モバイル（SP）時の言語切り替えをヘッダーに表示 */
+@media (max-width: 50rem) {
+  .header .right-group {
+    display: flex !important;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  /* ヘッダー内では言語切り替えのみ表示（SNSアイコンやテーマ切り替えは非表示） */
+  .header .right-group .social-icons,
+  .header .right-group starlight-theme-select {
+    display: none;
+  }
+
+  /* サイドメニュー（ドロワー）側の言語切り替えは重複防止のため非表示 */
+  .mobile-preferences starlight-lang-select {
+    display: none;
+  }
+
+  /* モバイル時の言語セレクターのフォントサイズ微調整 */
+  .header starlight-lang-select select {
+    font-size: var(--sl-text-xs);
+  }
+}
+
