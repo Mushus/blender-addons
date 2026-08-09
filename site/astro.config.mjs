@@ -82,18 +82,33 @@ export default defineConfig({
       sidebar: [
         {
           label: 'ガイド',
+          translations: { en: 'Guides' },
           items: [
-            { label: 'はじめに', link: '/guides/getting-started/' },
-            { label: 'ダウンロード一覧', link: '/downloads/' },
-            { label: 'インストール方法', link: '/guides/installation/' },
+            {
+              label: 'はじめに',
+              translations: { en: 'Getting Started' },
+              link: '/guides/getting-started/',
+            },
+            {
+              label: 'ダウンロード一覧',
+              translations: { en: 'Downloads' },
+              link: '/downloads/',
+            },
+            {
+              label: 'インストール方法',
+              translations: { en: 'Installation' },
+              link: '/guides/installation/',
+            },
             {
               label: 'よくある質問・トラブルシューティング',
+              translations: { en: 'FAQ / Troubleshooting' },
               link: '/guides/faq/',
             },
           ],
         },
         {
           label: 'アドオン解説',
+          translations: { en: 'Add-ons' },
           items: getAddonSidebarItems(),
         },
       ],
