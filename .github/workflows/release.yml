@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       regenerate:
-        description: "Delete today's release, force-push tag to HEAD, recreate draft"
+        description: "Delete latest release for today (or specified tag), force-push tag to HEAD, recreate draft"
         type: boolean
         default: false
 

@@ -72,15 +72,79 @@ def force_push_tag(tag_name: str, target_sha: str) -> None:
     print(f"Force-pushed tag {tag_name} -> {target_sha}")
 
 
+def _tag_number(tag: str, base: str) -> int | None:
+    if tag == base:
+        return 0
+    if tag.startswith(base + "."):
+        suffix = tag[len(base) + 1 :]
+        if suffix.isdigit():
+            return int(suffix)
+    return None
+
+
+def _list_today_tags(base: str) -> list[str]:
+    try:
+        output = run_command(["git", "tag", "--list", f"{base}*"])
+    except subprocess.CalledProcessError:
+        return []
+    tags = [line.strip() for line in output.splitlines() if line.strip()]
+    return [t for t in tags if _tag_number(t, base) is not None]
+
+
+def _query_is_draft(tag: str, gh_bin: str, env: dict[str, str]) -> str | None:
+    res = subprocess.run(
+        [gh_bin, "release", "view", tag, "--json", "isDraft", "--jq", ".isDraft"],
+        cwd=PROJECT_ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        env=env,
+    )
+    if res.returncode == 0:
+        return res.stdout.strip()
+    return None
+
+
+def _resolve_auto_tag(
+    today: str,
+    gh_bin: str | None,
+    env: dict[str, str] | None,
+    is_regenerate: bool,
+    no_draft: bool,
+) -> str:
+    base = f"release-{today}"
+    today_tags = _list_today_tags(base)
+    if not today_tags:
+        return base
+    today_tags_sorted = sorted(today_tags, key=lambda t: _tag_number(t, base) or 0)
+    latest = today_tags_sorted[-1]
+    if is_regenerate:
+        return latest
+    if no_draft or gh_bin is None or env is None:
+        num = _tag_number(latest, base)
+        assert num is not None
+        return f"{base}.{num + 1}"
+    is_draft = _query_is_draft(latest, gh_bin, env)
+    if is_draft == "true":
+        return latest
+    if is_draft == "false":
+        num = _tag_number(latest, base)
+        assert num is not None
+        return f"{base}.{num + 1}"
+    return latest
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Prepare draft release assets and upload to GitHub.")
     parser.add_argument("--no-draft", action="store_true", help="Skip GitHub release draft creation/upload.")
-    parser.add_argument("--tag-name", default="", help="Tag name for release (default: release-YYYY.MM.DD).")
+    parser.add_argument(
+        "--tag-name", default="", help="Tag name for release (default: release-YYYY.MM.DD, auto .N for same-day repeats)."
+    )
     parser.add_argument("--blender-target", default="", help="Blender target version suffix.")
     parser.add_argument(
         "--regenerate",
         action="store_true",
-        help="Delete today's release, force-push the tag to HEAD, and recreate a draft (recovery path).",
+        help="Delete the target release (latest for today if no --tag-name), force-push the tag to HEAD, and recreate a draft.",
     )
     args = parser.parse_args()
 
@@ -94,7 +158,15 @@ def main() -> None:
         blender_target = target_path.read_text(encoding="utf-8").strip()
 
     today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y.%m.%d")
-    tag_name = args.tag_name if args.tag_name else f"release-{today}"
+    if args.tag_name:
+        tag_name = args.tag_name
+    else:
+        gh_bin_early = shutil.which("gh") if not args.no_draft else None
+        env_early: dict[str, str] | None = None
+        if gh_bin_early is not None:
+            env_early = os.environ.copy()
+            env_early["GH_PROMPT_DISABLED"] = "true"
+        tag_name = _resolve_auto_tag(today, gh_bin_early, env_early, args.regenerate, args.no_draft)
 
     previous_tag = get_previous_tag(tag_name)
     changed_files = get_changed_files(previous_tag)
@@ -179,7 +251,8 @@ def main() -> None:
 
     suite_file = None
     if suite_changed:
-        suite_file = f"blender_addon_suite-{today}-blender{blender_target}.zip"
+        tag_suffix = tag_name.removeprefix("release-")
+        suite_file = f"blender_addon_suite-{tag_suffix}-blender{blender_target}.zip"
         shutil.copy(dist_dir / "blender_addon_suite.zip", release_dir / suite_file)
 
     manifest = {
@@ -195,7 +268,8 @@ def main() -> None:
 
     body_lines = ["## Changed", ""]
     if suite_changed:
-        body_lines.append(f"- blender_addon_suite ({today})")
+        tag_suffix = tag_name.removeprefix("release-")
+        body_lines.append(f"- blender_addon_suite ({tag_suffix})")
     for item in manifest_packages:
         if item["changed"]:
             body_lines.append(f"- {item['id']} {item['version']}")
@@ -223,20 +297,7 @@ def main() -> None:
         env = os.environ.copy()
         env["GH_PROMPT_DISABLED"] = "true"
 
-        res = subprocess.run(
-            [gh_bin, "release", "view", tag_name, "--json", "isDraft", "--jq", ".isDraft"],
-            cwd=PROJECT_ROOT,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            env=env,
-        )
-        existing_is_draft = res.stdout.strip() if res.returncode == 0 else None
-
-        if existing_is_draft == "false" and not args.regenerate:
-            print("Today's release is already published; deferring additional changes to the next day.")
-            print("Re-run with --regenerate to replace it with a new draft.")
-            sys.exit(0)
+        existing_is_draft = _query_is_draft(tag_name, gh_bin, env)
 
         release_target = run_command(["git", "rev-parse", "HEAD"])
         assets = [str(p) for p in release_dir.iterdir() if p.is_file()]

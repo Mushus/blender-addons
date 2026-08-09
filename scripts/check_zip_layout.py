@@ -42,7 +42,10 @@ def main() -> None:
         source = ROOT / package["source"]
         if not source.is_dir():
             raise SystemExit(f"Missing package source: {source}")
+        if not isinstance(package.get("extension"), dict):
+            raise SystemExit(f"{package_id}: missing extension metadata in release/packages.json")
         expected = _expected_under(source, package_id)
+        expected.add(f"{package_id}/blender_manifest.toml")
         _assert_contains(DIST / f"{package_id}.zip", expected)
 
     suite_zip = DIST / f"{suite_id}.zip"
@@ -55,6 +58,7 @@ def main() -> None:
         source = ROOT / package["source"]
         name = Path(package["source"]).name
         suite_expected |= _expected_under(source, f"{suite_id}/addons/{name}")
+        suite_expected.add(f"{suite_id}/addons/{name}/blender_manifest.toml")
     _assert_contains(suite_zip, suite_expected)
 
     print("ZIP layout check passed")

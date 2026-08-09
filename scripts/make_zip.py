@@ -8,12 +8,36 @@ import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from extension_manifest import (
+    build_manifest_dict,
+    package_website,
+    parse_bl_info,
+    write_manifest,
+)
 from zip_utils import iter_files
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 BUILD = ROOT / "build"
 PACKAGES_JSON = ROOT / "release" / "packages.json"
+
+
+def _write_extension_manifest(package: dict, package_dir: Path, catalog: dict) -> None:
+    extension_meta = package.get("extension")
+    if not isinstance(extension_meta, dict):
+        raise SystemExit(f"{package['id']}: missing extension metadata in release/packages.json")
+    defaults = catalog.get("extension_defaults") or {}
+    if not isinstance(defaults, dict):
+        raise SystemExit("release/packages.json extension_defaults must be an object")
+    bl_info = parse_bl_info(package_dir / "__init__.py")
+    manifest = build_manifest_dict(
+        package_id=package["id"],
+        bl_info=bl_info,
+        extension_meta=extension_meta,
+        defaults=defaults,
+        website=package_website(package["id"]),
+    )
+    write_manifest(package_dir, manifest)
 
 
 def _stable_packages(catalog: dict, package_ids: list[str] | None) -> list[dict]:
@@ -69,11 +93,13 @@ def make_zips(
         shutil.copy2(ROOT / "addons" / "__init__.py", suite_dir / "addons" / "__init__.py")
         for package in suite_selected:
             source = ROOT / package["source"]
+            dest = suite_dir / "addons" / Path(package["source"]).name
             shutil.copytree(
                 source,
-                suite_dir / "addons" / Path(package["source"]).name,
+                dest,
                 ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo", ".DS_Store", "Thumbs.db"),
             )
+            _write_extension_manifest(package, dest, catalog)
         zip_path = DIST / f"{suite_id}.zip"
         _zip_directory(suite_dir, zip_path)
         created.append(zip_path)
@@ -86,6 +112,7 @@ def make_zips(
             package_dir,
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo", ".DS_Store", "Thumbs.db"),
         )
+        _write_extension_manifest(package, package_dir, catalog)
         zip_path = DIST / f"{package_id}.zip"
         _zip_directory(package_dir, zip_path)
         created.append(zip_path)

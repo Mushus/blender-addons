@@ -1,27 +1,45 @@
 {
   "suite_id": "blender_addon_suite",
   "blender_target": "5.1",
+  "extension_defaults": {
+    "maintainer": "Mushus",
+    "license": ["SPDX:GPL-3.0-or-later"]
+  },
   "packages": [
     {
       "id": "uv_island_mask",
       "source": "addons/uv_island_mask",
       "status": "stable",
       "group_id": "uv_utility",
-      "group_label": "UV Utility"
+      "group_label": "UV Utility",
+      "extension": {
+        "tags": ["UV"],
+        "permissions": {
+          "files": "Write baked UV mask images to disk"
+        }
+      }
     },
     {
       "id": "slide_relax",
       "source": "addons/slide_relax",
       "status": "stable",
       "group_id": "mesh_utility",
-      "group_label": "Mesh Utility"
+      "group_label": "Mesh Utility",
+      "extension": {
+        "tagline": "Relax selected Edit Mode vertices along tangent planes",
+        "tags": ["Mesh"]
+      }
     },
     {
       "id": "weight_smooth",
       "source": "addons/weight_smooth",
       "status": "stable",
       "group_id": "weight_utility",
-      "group_label": "Weight Utility"
+      "group_label": "Weight Utility",
+      "extension": {
+        "tagline": "Smooth and normalize deform weights on selected vertices",
+        "tags": ["Paint"]
+      }
     }
   ]
 }
