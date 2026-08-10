@@ -4,7 +4,7 @@ import bpy
 from bpy.app.translations import pgettext_iface
 
 from .exporter import export_with_inbetweens
-from .metadata import format_target_name, parse_target_name
+from .metadata import format_target_name, normalize_position, parse_target_name
 from .sync import (
     clear_shape_to_basis,
     controller_group,
@@ -24,6 +24,39 @@ def _active_key(context):
     if obj is None or obj.type != "MESH" or obj.data.shape_keys is None:
         return None
     return obj.data.shape_keys
+
+
+def rename_target_position(target, position: float) -> bool:
+    """Rename a target without storing a second copy of its position."""
+    spec = parse_target_name(target.name)
+    if spec is None:
+        raise ValueError(_message("Shape Key name does not contain a canonical position"))
+    new_name = format_target_name(spec.channel, normalize_position(position))
+    duplicate = target.id_data.key_blocks.get(new_name)
+    if duplicate is not None and duplicate != target:
+        return False
+    target.name = new_name
+    return True
+
+
+def _update_selected_target_position(operator, context) -> None:
+    target_name = operator.target_name
+    if not target_name:
+        return
+    key = _active_key(context)
+    target = key.key_blocks.get(target_name) if key is not None else None
+    if target is None:
+        return
+    spec = parse_target_name(target.name)
+    if spec is None:
+        return
+    if rename_target_position(target, operator.position):
+        operator.target_name = target.name
+        return
+
+    operator.target_name = ""
+    operator.position = spec.position
+    operator.target_name = target_name
 
 
 def _has_multiple_selected_shape_keys(key) -> bool:
@@ -255,6 +288,19 @@ class FBXI_OT_select_target(bpy.types.Operator):
     bl_description = "Select this Shape Key target"
 
     target_name: bpy.props.StringProperty(name="Target")
+    position: bpy.props.FloatProperty(
+        name="Position",
+        description="Position of this in-between Shape Key",
+        min=0.0,
+        max=1.0,
+        soft_min=0.0,
+        soft_max=1.0,
+        step=1,
+        precision=3,
+        subtype="FACTOR",
+        options={"SKIP_SAVE"},
+        update=_update_selected_target_position,
+    )
 
     @classmethod
     def poll(cls, context) -> bool:

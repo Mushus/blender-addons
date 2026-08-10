@@ -16,7 +16,6 @@ TRANSLATIONS = {
         ("*", "Target"): "ターゲット",
         ("*", "Add Existing Shape Key"): "既存シェイプキーを追加",
         ("*", "Add to In-Between"): "インビトウィーンに追加",
-        ("*", "Position unavailable"): "位置を取得できません",
         ("*", "Value unavailable"): "値を取得できません",
         ("*", "Missing controller: {controller}"): "コントローラーがありません: {controller}",
         ("*", "Shape Key: {name}"): "シェイプキー: {name}",
@@ -31,6 +30,8 @@ TRANSLATIONS = {
             "インビトウィーンコントローラーの値を取得できません: {channel}",
         ("*", "Shape Key target position must be finite"):
             "シェイプキーターゲットの位置は有限値で指定してください",
+        ("*", "Shape Key name does not contain a canonical position"):
+            "シェイプキー名に正規化された位置が含まれていません",
         ("*", "In-Between position must be between 0.000 and 1.000"):
             "インビトウィーンの位置は0.000から1.000の範囲にしてください",
         ("*", "In-Between target positions must be strictly increasing"):

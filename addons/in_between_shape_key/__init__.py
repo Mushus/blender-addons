@@ -11,7 +11,7 @@ from . import runtime
 bl_info = {
     "name": "In Between Shape Key",
     "author": "Mushus",
-    "version": (2026, 8, 9),
+    "version": (2026, 8, 10),
     "blender": (4, 2, 0),
     "location": "Properties > Data > Shape Keys; File > Export > FBX (.fbx)",
     "description": "Export Name@Position Shape Keys as FBX in-between blend shapes.",
@@ -22,7 +22,6 @@ _CHILD_MODULES = (
     "runtime",
     "i18n",
     "metadata",
-    "ui_state",
     "fbx_binary",
     "postprocess",
     "validation",
@@ -50,47 +49,46 @@ def _bindings():
     i18n = importlib.import_module(f"{__package__}.i18n")
     operator = importlib.import_module(f"{__package__}.operator")
     ui = importlib.import_module(f"{__package__}.ui")
-    ui_state = importlib.import_module(f"{__package__}.ui_state")
     sync = importlib.import_module(f"{__package__}.sync")
-    return i18n, operator, ui, ui_state, sync
+    return i18n, operator, ui, sync
 
 
 def _mark_dirty(*_args):
     global _dirty
     if not _sync_guard:
         _dirty = True
-        _schedule_ui_sync()
+        _schedule_sync()
 
 
-def _sync_ui_timer():
+def _sync_timer():
     global _sync_guard
     state = runtime.get_state()
     if state is None:
         return None
     if _sync_guard:
-        state["ui_sync_timer"] = _sync_ui_timer
+        state["sync_timer"] = _sync_timer
         return 0.01
-    state["ui_sync_timer"] = None
+    state["sync_timer"] = None
     _sync_guard = True
     try:
         sync = importlib.import_module(f"{__package__}.sync")
-        sync.sync_all(bpy.data, sync_ui=True)
+        sync.sync_all(bpy.data)
     finally:
         _sync_guard = False
     return None
 
 
-def _schedule_ui_sync() -> None:
+def _schedule_sync() -> None:
     state = runtime.get_state()
     if state is None:
         return
-    timer = state.get("ui_sync_timer")
+    timer = state.get("sync_timer")
     if timer is not None and bpy.app.timers.is_registered(timer):
         return
-    bpy.app.timers.register(_sync_ui_timer, first_interval=0.0)
-    state["ui_sync_timer"] = _sync_ui_timer
-    if _sync_ui_timer not in state["timers"]:
-        state["timers"].append(_sync_ui_timer)
+    bpy.app.timers.register(_sync_timer, first_interval=0.0)
+    state["sync_timer"] = _sync_timer
+    if _sync_timer not in state["timers"]:
+        state["timers"].append(_sync_timer)
 
 
 def _sync_handler(_scene, _depsgraph):
@@ -98,12 +96,12 @@ def _sync_handler(_scene, _depsgraph):
     if _sync_guard:
         return
     _dirty = True
-    _schedule_ui_sync()
+    _schedule_sync()
 
 
 @persistent
 def _load_post_handler(_unused):
-    _schedule_ui_sync()
+    _schedule_sync()
 
 
 def _menu_func_export(self, _context):
@@ -125,9 +123,8 @@ def register():
     # runtime may have been reloaded; re-bind the package attribute.
     runtime_mod = importlib.import_module(f"{__package__}.runtime")
 
-    i18n, operator, ui, ui_state, _sync = _bindings()
+    i18n, operator, ui, _sync = _bindings()
     classes = (
-        ui_state.FBXI_PG_target_position,
         ui.FBXI_MT_add_existing_key,
         ui.FBXI_PT_shape_key_inbetween,
         operator.FBXI_OT_rescan_groups,
@@ -150,15 +147,6 @@ def register():
         bpy.utils.register_class(cls)
         state["classes"].append(cls)
 
-    setattr(
-        bpy.types.WindowManager,
-        ui_state.TARGET_POSITIONS_PROP,
-        bpy.props.CollectionProperty(
-            type=ui_state.FBXI_PG_target_position,
-            options={"SKIP_SAVE"},
-        ),
-    )
-    state["rna_props"].append((bpy.types.WindowManager, ui_state.TARGET_POSITIONS_PROP))
     draw_specials = ui.draw_shape_key_specials
     for menu in (
         getattr(bpy.types, "MESH_MT_shape_key_context_menu", None),
@@ -197,7 +185,7 @@ def register():
     state["fbx_menu"] = {"custom": _menu_func_export, "original": original_menu}
     # Blender restricts bpy.data while an add-on is registering. A zero-delay
     # timer performs the initial name scan as soon as registration completes.
-    _schedule_ui_sync()
+    _schedule_sync()
 
 
 def unregister():

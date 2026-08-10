@@ -254,21 +254,19 @@ def _start(artifacts: Path, zip_path: Path) -> None:
             + ", ".join(block.name for block in key.key_blocks)
         )
     _log("Existing Shape Key interaction created Smile@0.5 and Smile@1")
-    from in_between_shape_key.ui_state import find_entry
+    from in_between_shape_key.operator import rename_target_position
 
-    endpoint = find_entry(bpy.context.window_manager, obj, "Smile@1")
-    if endpoint is None:
-        raise RuntimeError("UI smoke could not resolve the @1 position row")
+    endpoint = key.key_blocks["Smile@1"]
     for position in (0.95, 0.925, 0.901):
-        endpoint.position = position
-    if key.key_blocks.get("Smile@1") is None:
-        raise RuntimeError("Position drag updates were applied before debounce completion")
+        rename_target_position(endpoint, position)
+    if key.key_blocks.get("Smile@0.901") != endpoint:
+        raise RuntimeError("Position changes were not written directly to the Shape Key name")
 
     def verify_debounced_position():
         if key.key_blocks.get("Smile@0.901") is None:
-            _fail("Debounced position update did not create Smile@0.901")
+            _fail("Name-derived position did not remain Smile@0.901")
             return
-        _log("Position drag updates were consolidated at 0.901")
+        _log("Position stayed derived from the canonical Smile@0.901 name")
         _continue_after_interaction(artifacts, window, obj, key, area, region)
 
     bpy.app.timers.register(verify_debounced_position, first_interval=0.3)

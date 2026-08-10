@@ -382,39 +382,28 @@ def _sync_key_impl(key, obj=None) -> bool:
     return False
 
 
-def sync_key(key, obj=None, *, sync_ui=True) -> bool:
+def sync_key(key, obj=None) -> bool:
     key_id = key.session_uid
     if key_id in _SYNCING_KEYS:
         return False
     _SYNCING_KEYS.add(key_id)
     try:
-        changed = _sync_key_impl(key, obj)
-        if sync_ui and obj is not None:
-            from .ui_state import sync_object
-
-            sync_object(obj)
-        return changed
+        return _sync_key_impl(key, obj)
     finally:
         _SYNCING_KEYS.remove(key_id)
 
 
-def sync_all(bpy_data, *, sync_ui=False) -> None:
+def sync_all(bpy_data) -> None:
     synced_keys = set()
     for obj in bpy_data.objects:
         if obj.type != "MESH" or obj.data.shape_keys is None:
             continue
         enforce_controller_selection(obj)
-        if obj.mode != "OBJECT":
-            continue
         key_id = obj.data.shape_keys.session_uid
         if key_id in synced_keys:
             continue
         synced_keys.add(key_id)
-        sync_key(obj.data.shape_keys, obj, sync_ui=False)
-    if sync_ui:
-        from .ui_state import sync_all as sync_all_ui
-
-        sync_all_ui(bpy_data)
+        sync_key(obj.data.shape_keys, obj)
 
 
 def enforce_controller_selection(obj) -> None:

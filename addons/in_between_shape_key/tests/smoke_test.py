@@ -101,10 +101,18 @@ def _set_controller_value(obj, controller, value: float) -> None:
     bpy.context.view_layer.update()
 
 
-def _flush_position_updates() -> None:
-    from in_between_shape_key.ui_state import _flush_pending_positions
+def _target_position(target) -> float:
+    from in_between_shape_key.metadata import parse_target_name
 
-    _flush_pending_positions(force=True)
+    spec = parse_target_name(target.name)
+    assert spec is not None
+    return spec.position
+
+
+def _set_target_position(target, position: float) -> None:
+    from in_between_shape_key.operator import rename_target_position
+
+    rename_target_position(target, position)
 
 
 def _assert_managed_drivers(obj, key, controller_name: str, target_names: set[str]) -> None:
@@ -156,7 +164,11 @@ def _assert_inbetween_panel_draws(obj):
         for event in panel.layout.events
     ) == 2
     assert sum(event == ("operator", FBXI_OT_remove_target.bl_idname) for event in panel.layout.events) == 2
-    positions = [event for event in panel.layout.events if event[0] == "prop" and event[2] == "position"]
+    positions = [
+        event
+        for event in panel.layout.events
+        if event[0] == "prop" and event[2] == "position"
+    ]
     assert len(positions) == 2, panel.layout.events
     from in_between_shape_key.sync import controller_value_path
 
@@ -173,7 +185,11 @@ def _assert_inbetween_panel_draws(obj):
     panel = _RecordingPanel()
     draw_shape_key_inbetween(panel, bpy.context)
     assert sum(event == ("operator", FBXI_OT_remove_target.bl_idname) for event in panel.layout.events) == 2
-    positions = [event for event in panel.layout.events if event[0] == "prop" and event[2] == "position"]
+    positions = [
+        event
+        for event in panel.layout.events
+        if event[0] == "prop" and event[2] == "position"
+    ]
     assert len(positions) == 2, panel.layout.events
 
     # The controller row is also a valid context for the panel.  This is the
@@ -236,11 +252,10 @@ def _assert_inbetween_panel_draws(obj):
 
 def _assert_position_slider_operations():
     from in_between_shape_key.sync import sync_key
-    from in_between_shape_key.ui_state import find_entry
     from in_between_shape_key.validation import validate_shape_keys
 
-    # Arrange: a converted controller with one endpoint. The UI slider is a
-    # transient adapter; the Shape Key name remains the persisted source of truth.
+    # Background: target positions are derived from Shape Key names. The UI must
+    # never require a separately synchronized position cache.
     mesh = bpy.data.meshes.new("FBXI Position Slider Mesh")
     mesh.from_pydata([(0, 0, 0), (1, 0, 0), (0, 1, 0)], [], [(0, 1, 2)])
     mesh.update()
@@ -254,17 +269,15 @@ def _assert_position_slider_operations():
     obj.active_shape_key_index = mesh.shape_keys.key_blocks.find(controller.name)
     assert bpy.ops.fbx_shape_inbetween.convert_to_inbetween() == {"FINISHED"}
     key = mesh.shape_keys
-    entry = find_entry(bpy.context.window_manager, obj, "Position@1")
-    assert entry is not None
-    assert abs(entry.position - 1.0) < 1e-6
+    endpoint = key.key_blocks["Position@1"]
+    assert abs(_target_position(endpoint) - 1.0) < 1e-6
 
-    # Act: edit the standard slider's RNA value, then evaluate beyond the new
-    # highest target. This exercises the same update callback used by the GUI.
+    # Act: edit the Shape Key's computed RNA value, then rebuild derived drivers.
     obj.name = "FBXI Position Slider Renamed Object"
-    entry.position = 0.9
-    assert key.key_blocks.get("Position@1") is not None
-    assert key.key_blocks.get("Position@0.9") is None
-    _flush_position_updates()
+    _set_target_position(endpoint, 0.9)
+    assert key.key_blocks.get("Position@1") is None
+    assert key.key_blocks.get("Position@0.9") == endpoint
+    sync_key(key, obj)
     _set_controller_value(obj, controller, 0.95)
     bpy.context.view_layer.update()
 
@@ -272,7 +285,7 @@ def _assert_position_slider_operations():
     # remains fully applied through 100%.
     assert key.key_blocks.get("Position@1") is None
     assert key.key_blocks.get("Position@0.9") is not None
-    assert entry.target_name == "Position@0.9"
+    assert endpoint.name == "Position@0.9"
     assert abs(key.key_blocks["Position@0.9"].value - 1.0) < 1e-6
     evaluated = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
     evaluated_mesh = evaluated.to_mesh()
@@ -283,18 +296,17 @@ def _assert_position_slider_operations():
     assert validate_shape_keys(key).ok
 
     # Arrange/Act: create another target, then try to move it onto an occupied
-    # position. The adapter must reject the duplicate and restore its slider.
+    # position. The computed property must reject the duplicate without storing
+    # a conflicting display value.
     obj.shape_key_add(name="Position@0.5", from_mix=False)
     sync_key(key, obj)
-    duplicate_entry = find_entry(bpy.context.window_manager, obj, "Position@0.5")
-    assert duplicate_entry is not None
-    duplicate_entry.position = 0.9
-    _flush_position_updates()
+    duplicate_target = key.key_blocks["Position@0.5"]
+    _set_target_position(duplicate_target, 0.9)
 
     # Assert: duplicate positions never rename or overwrite a Shape Key.
     assert key.key_blocks.get("Position@0.5") is not None
     assert key.key_blocks.get("Position@0.9") is not None
-    assert abs(duplicate_entry.position - 0.5) < 1e-6
+    assert abs(_target_position(duplicate_target) - 0.5) < 1e-6
     assert bpy.ops.fbx_shape_inbetween.remove_target(target_name="Position@0.9") == {"FINISHED"}
     assert key.key_blocks.get("Position@0.9") is None
     assert validate_shape_keys(key).ok
@@ -304,14 +316,13 @@ def _assert_position_slider_operations():
     controller.name = "Position Renamed"
     import in_between_shape_key
 
-    in_between_shape_key._sync_ui_timer()
+    in_between_shape_key._sync_timer()
 
-    # Assert: current names alone rebuild group ownership, drivers, and UI rows.
+    # Assert: current names alone rebuild group ownership, drivers, and values.
     assert key.key_blocks.get("Position@0.5") is None
     assert key.key_blocks.get("Position Renamed@0.5") is not None
-    renamed_entry = find_entry(bpy.context.window_manager, obj, "Position Renamed@0.5")
-    assert renamed_entry is not None
-    assert abs(renamed_entry.position - 0.5) < 1e-6
+    renamed_target = key.key_blocks["Position Renamed@0.5"]
+    assert abs(_target_position(renamed_target) - 0.5) < 1e-6
 
     bpy.data.objects.remove(obj, do_unlink=True)
     print("Position slider, parent rename, duplicate rejection, and flat-tail tests passed")
@@ -319,7 +330,6 @@ def _assert_position_slider_operations():
 
 def _assert_zero_position_target():
     from in_between_shape_key.sync import sync_key
-    from in_between_shape_key.ui_state import find_entry
     from in_between_shape_key.validation import validate_shape_keys
 
     # Background: @0 is the lower endpoint, not an invalid or inactive target.
@@ -350,8 +360,7 @@ def _assert_zero_position_target():
     # Assert: zero is accepted by naming, validation, and the native slider.
     zero = key.key_blocks["Thickness@0"]
     endpoint = key.key_blocks["Thickness@1"]
-    entry = find_entry(bpy.context.window_manager, obj, zero.name)
-    assert entry is not None and abs(entry.position) < 1e-6
+    assert abs(_target_position(zero)) < 1e-6
     assert validate_shape_keys(key).ok
     _assert_managed_drivers(obj, key, "Thickness", {"Thickness@0", "Thickness@1"})
     zero_driver = next(
@@ -381,11 +390,11 @@ def _assert_zero_position_target():
             evaluated.to_mesh_clear()
 
     # Act/Assert: the slider can move away from zero and return to exactly zero.
-    entry.position = 0.1
-    _flush_position_updates()
+    _set_target_position(zero, 0.1)
+    sync_key(key, obj)
     assert key.key_blocks.get("Thickness@0.1") is not None
-    entry.position = 0.0
-    _flush_position_updates()
+    _set_target_position(zero, 0.0)
+    sync_key(key, obj)
     assert key.key_blocks.get("Thickness@0.1") is None
     assert key.key_blocks.get("Thickness@0") is not None
     assert abs(key.key_blocks["Thickness@0"].value - 1.0) < 1e-6
@@ -396,7 +405,6 @@ def _assert_zero_position_target():
 
 def _assert_existing_canonical_names_sync_automatically():
     from in_between_shape_key.sync import controller_value_property
-    from in_between_shape_key.ui_state import find_entry
     from in_between_shape_key.validation import validate_shape_keys
 
     # Background: a blend file can already contain a complete group named with
@@ -420,7 +428,7 @@ def _assert_existing_canonical_names_sync_automatically():
         # depsgraph name-change synchronization.
         import in_between_shape_key
 
-        in_between_shape_key._sync_ui_timer()
+        in_between_shape_key._sync_timer()
         key = mesh.shape_keys
 
         # Assert: names alone create the controller property, UI rows, and
@@ -428,8 +436,9 @@ def _assert_existing_canonical_names_sync_automatically():
         assert validate_shape_keys(key).ok
         assert controller_value_property("Thickness") in obj
         for target_name in ("Thickness@0", "Thickness@0.5", "Thickness@1"):
-            assert key.key_blocks.get(target_name) is not None
-            assert find_entry(bpy.context.window_manager, obj, target_name) is not None
+            target = key.key_blocks.get(target_name)
+            assert target is not None
+            assert abs(_target_position(target) - float(target_name.rsplit("@", 1)[1])) < 1e-6
         _assert_managed_drivers(
             obj,
             key,
@@ -442,8 +451,8 @@ def _assert_existing_canonical_names_sync_automatically():
 
 
 def _assert_manual_group_rename_keeps_slider():
+    from in_between_shape_key.sync import sync_key
     from in_between_shape_key.ui import draw_shape_key_inbetween
-    from in_between_shape_key.ui_state import find_entry
 
     # Background: names are the only persisted group contract. After both sides
     # are renamed, synchronization must rebuild the UI without identity caches.
@@ -461,7 +470,7 @@ def _assert_manual_group_rename_keeps_slider():
     obj.active_shape_key_index = mesh.shape_keys.key_blocks.find(controller.name)
     assert bpy.ops.fbx_shape_inbetween.convert_to_inbetween() == {"FINISHED"}
     key = mesh.shape_keys
-    assert find_entry(bpy.context.window_manager, obj, "Bold@1") is not None
+    assert abs(_target_position(key.key_blocks["Bold@1"]) - 1.0) < 1e-6
 
     # Act: rename the controller and endpoint manually, then synchronize names.
     controller.name = "Thickness"
@@ -469,7 +478,7 @@ def _assert_manual_group_rename_keeps_slider():
     endpoint.name = "Thickness@1"
     import in_between_shape_key
 
-    in_between_shape_key._sync_ui_timer()
+    in_between_shape_key._sync_timer()
     obj.active_shape_key_index = key.key_blocks.find(endpoint.name)
     for block in key.key_blocks:
         block.select = block == endpoint
@@ -477,13 +486,13 @@ def _assert_manual_group_rename_keeps_slider():
     draw_shape_key_inbetween(panel, bpy.context)
 
     # Assert: the standard slider is rebuilt from the current canonical names.
-    labels = [event[1] for event in panel.layout.events if event[0] == "label"]
-    assert "Position unavailable" not in labels, panel.layout.events
-    assert any(event[0] == "prop" and event[2] == "position" for event in panel.layout.events), panel.layout.events
-    renamed_entry = find_entry(bpy.context.window_manager, obj, "Thickness@1")
-    assert renamed_entry is not None
-    renamed_entry.position = 0.8
-    _flush_position_updates()
+    assert any(
+        event[0] == "prop" and event[2] == "position"
+        for event in panel.layout.events
+    ), panel.layout.events
+    renamed_target = key.key_blocks["Thickness@1"]
+    _set_target_position(renamed_target, 0.8)
+    sync_key(key, obj)
     assert key.key_blocks.get("Thickness@1") is None
     assert key.key_blocks.get("Thickness@0.8") is not None
 
@@ -633,7 +642,7 @@ def _assert_managed_animation_rebuild():
 
 def _assert_flat_tail_export():
     from in_between_shape_key.fbx_binary import FBXBinary
-    from in_between_shape_key.ui_state import find_entry
+    from in_between_shape_key.sync import sync_key
 
     # Background: FBX FullWeights must contain one weight per target shape. When
     # the user's highest target is below 100%, export must synthesize an identical
@@ -652,10 +661,9 @@ def _assert_flat_tail_export():
         controller.data[1].co.y = 1.0
         obj.active_shape_key_index = mesh.shape_keys.key_blocks.find(controller.name)
         assert bpy.ops.fbx_shape_inbetween.convert_to_inbetween() == {"FINISHED"}
-        entry = find_entry(bpy.context.window_manager, obj, "FlatTail@1")
-        assert entry is not None
-        entry.position = 0.9
-        _flush_position_updates()
+        endpoint = mesh.shape_keys.key_blocks["FlatTail@1"]
+        _set_target_position(endpoint, 0.9)
+        sync_key(mesh.shape_keys, obj)
         assert mesh.shape_keys.key_blocks.get("FlatTail@0.9") is not None
 
         # Act: export through the production post-processor.
@@ -716,11 +724,9 @@ def _assert_japanese_translation():
 
 def _assert_undo_redo_tracking():
     from in_between_shape_key.sync import sync_key
-    from in_between_shape_key.ui_state import find_entry
 
-    # Background: the UI cache uses Blender session UIDs and canonical names.
-    # Undo may restore datablocks from another snapshot, so current names must
-    # rebuild drivers and rows without any stale pointer mapping.
+    # Background: Undo may restore datablocks from another snapshot. The current
+    # Shape Key name must still provide the UI value without an identity cache.
     # Arrange: create a managed group and push the pre-rename snapshot.
     mesh = bpy.data.meshes.new("FBXI Undo Tracking Mesh")
     mesh.from_pydata([(0, 0, 0), (1, 0, 0), (0, 1, 0)], [], [(0, 1, 2)])
@@ -752,7 +758,7 @@ def _assert_undo_redo_tracking():
         assert key.key_blocks.get("UndoTrack") is not None
         assert key.key_blocks.get("UndoTrack@1") is not None
         assert key.key_blocks.get("RedoTrack") is None
-        assert find_entry(bpy.context.window_manager, obj, "UndoTrack@1") is not None
+        assert abs(_target_position(key.key_blocks["UndoTrack@1"]) - 1.0) < 1e-6
 
         # Act/Assert: redo restores the renamed group and its matching UI row.
         assert bpy.ops.ed.redo() == {"FINISHED"}
@@ -762,7 +768,7 @@ def _assert_undo_redo_tracking():
         assert key.key_blocks.get("RedoTrack") is not None
         assert key.key_blocks.get("RedoTrack@1") is not None
         assert key.key_blocks.get("UndoTrack") is None
-        assert find_entry(bpy.context.window_manager, obj, "RedoTrack@1") is not None
+        assert abs(_target_position(key.key_blocks["RedoTrack@1"]) - 1.0) < 1e-6
     finally:
         obj = bpy.data.objects.get("FBXI Undo Tracking Object")
         if obj is not None:
@@ -783,7 +789,6 @@ def _assert_add_reorder_and_rename_order_independence():
     from in_between_shape_key.metadata import parse_target_name
     from in_between_shape_key.sync import controller_value_path, read_groups, sync_key
     from in_between_shape_key.ui import draw_shape_key_inbetween
-    from in_between_shape_key.ui_state import find_entry
 
     # Background: target membership used to be inferred from adjacency. Adding
     # an existing key or moving keys around could therefore bind the wrong row
@@ -871,15 +876,16 @@ def _assert_add_reorder_and_rename_order_independence():
         spec = parse_target_name(name)
         assert spec is not None and 0.0 <= spec.position <= 1.0
         assert "@@" not in name
-        assert find_entry(bpy.context.window_manager, obj, name) is not None
+        assert abs(_target_position(key.key_blocks[name]) - spec.position) < 1e-6
     obj.active_shape_key_index = key.key_blocks.find("Height@0.75")
     for block in key.key_blocks:
         block.select = block.name == "Height@0.75"
     panel = _RecordingPanel()
     draw_shape_key_inbetween(panel, bpy.context)
-    labels = [event[1] for event in panel.layout.events if event[0] == "label"]
-    assert "Position unavailable" not in labels, panel.layout.events
-    assert sum(event[0] == "prop" and event[2] == "position" for event in panel.layout.events) == 3
+    assert sum(
+        event[0] == "prop" and event[2] == "position"
+        for event in panel.layout.events
+    ) == 3
 
     # Act/Assert: deleting the controller removes all managed drivers instead of
     # leaving stale references or Value animation for a deleted naming group.
@@ -1042,13 +1048,13 @@ def main():
     bpy.context.view_layer.update()
     import in_between_shape_key
 
-    in_between_shape_key._sync_ui_timer()
+    in_between_shape_key._sync_timer()
     assert abs(controller.data[1].co.y) < 1e-6
 
     obj.active_shape_key_index = key.key_blocks.find("Smile")
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.context.view_layer.update()
-    in_between_shape_key._sync_ui_timer()
+    in_between_shape_key._sync_timer()
     assert obj.active_shape_key.name != "Smile"
     bpy.ops.object.mode_set(mode="OBJECT")
 
@@ -1066,7 +1072,7 @@ def main():
         bake_anim=False,
     )
     assert result == {"FINISHED"}, result
-    in_between_shape_key._sync_ui_timer()
+    in_between_shape_key._sync_timer()
     _assert_managed_drivers(
         obj,
         key,
@@ -1154,8 +1160,6 @@ def main():
         raise AssertionError("frame handlers leaked after reload-while-enabled")
     if hasattr(bpy.types, "FBXI_PT_shape_key_inbetween"):
         raise AssertionError("panel still registered after reload-while-enabled cleanup")
-    if hasattr(bpy.types.WindowManager, "fbxi_target_positions"):
-        raise AssertionError("target position RNA property leaked after reload-while-enabled")
 
     print("FBX Shape Key In-Between functional smoke test passed")
 

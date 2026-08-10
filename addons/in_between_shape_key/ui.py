@@ -10,7 +10,6 @@ from .operator import (
     FBXI_OT_select_target,
 )
 from .sync import controller_value_path, controller_value_property, read_groups
-from .ui_state import find_entry
 from .validation import validate_shape_keys
 
 
@@ -31,15 +30,12 @@ def _draw_target_row(layout, context, obj, key, member, active_name):
         icon="KEYTYPE_KEYFRAME_VEC",
         depress=target_name == active_name,
     )
+    button.position = float(member["position"])
     button.target_name = target_name
 
     controls = row.row(align=True)
     controls.enabled = obj.mode == "OBJECT"
-    entry = find_entry(context.window_manager, obj, target_name)
-    if entry is None:
-        controls.label(text="Position unavailable", icon="ERROR")
-    else:
-        controls.prop(entry, "position", text="", slider=True)
+    controls.prop(button, "position", text="", slider=True)
     remove = controls.operator(FBXI_OT_remove_target.bl_idname, text="", icon="X")
     remove.target_name = target_name
 
