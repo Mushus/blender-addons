@@ -199,29 +199,45 @@ def transform_scene(scene: FBXBinary) -> int:
                         connections.children.remove(connection_node)
                     elif child_id == channel_id and parent_id in channel_parents.get(channel_id, []):
                         connections.children.remove(connection_node)
-                connection = next(
-                    (
-                        node
-                        for node, relation, child_id, parent_id in connections_data
-                        if relation == "OO" and child_id == geometry_id and parent_id == canonical_channel_id
-                    ),
-                    None,
-                )
-                if connection is None:
+                changed += 1
+
+            # FBX SDK indexes FullWeights and target Shapes together. Remove the
+            # exporter's original links before appending the canonical order.
+            target_geometry_ids = {geometry_id for _position, geometry_id, _channel_id in entries}
+            expected_target_ids = [geometry_id for _position, geometry_id, _channel_id in entries]
+            current_target_ids = [
+                values[1]
+                for node in connections.children
+                if node.name == b"C"
+                and (values := _connection_values(node)) is not None
+                and values[0] == "OO"
+                and values[1] in target_geometry_ids
+                and values[2] == canonical_channel_id
+            ]
+            if current_target_ids != expected_target_ids:
+                connections.children[:] = [
+                    node
+                    for node in connections.children
+                    if not (
+                        node.name == b"C"
+                        and (values := _connection_values(node)) is not None
+                        and values[0] == "OO"
+                        and values[1] in target_geometry_ids
+                        and values[2] == canonical_channel_id
+                    )
+                ]
+                for geometry_id in expected_target_ids:
                     connections.children.append(
-                        Node(b"C", [string_property("OO"), connections_id_property(geometry_id), connections_id_property(canonical_channel_id)])
+                        Node(
+                            b"C",
+                            [
+                                string_property("OO"),
+                                connections_id_property(geometry_id),
+                                connections_id_property(canonical_channel_id),
+                            ],
+                        )
                     )
                 changed += 1
-            for _position, geometry_id, _channel_id in entries:
-                if geometry_id == entries[-1][1]:
-                    continue
-                if not any(
-                    node.name == b"C" and _connection_values(node) == ("OO", geometry_id, canonical_channel_id)
-                    for node in connections.children_named(b"C")
-                ):
-                    connections.children.append(
-                        Node(b"C", [string_property("OO"), connections_id_property(geometry_id), connections_id_property(canonical_channel_id)])
-                    )
 
     if remove_ids:
         objects.children[:] = [node for node in objects.children if _object_id(node) not in remove_ids]

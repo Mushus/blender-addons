@@ -1091,6 +1091,21 @@ def main():
     weights = happy.child(b"FullWeights")
     assert weights is not None
     assert weights.prop(0) == [0.0, 50.0, 75.0, 100.0], weights.prop(0)
+    # Background: FBX SDK pairs FullWeights[i] with target Shape i. The
+    # post-processor merges independent Blender channels into one progressive
+    # channel, so leaving the original endpoint connection in place reorders it.
+    # Why: lock the serialized target order to the same order as FullWeights.
+    connections = next(node for node in scene.roots if node.name == b"Connections")
+    object_by_id = {node.prop(0): node for node in objects.children if node.properties}
+    target_names = []
+    for connection in connections.children_named(b"C"):
+        if connection.prop(0) != "OO" or connection.prop(2) != happy.prop(0):
+            continue
+        target = object_by_id.get(connection.prop(1))
+        if target is None or target.name != b"Geometry" or target.prop(2) != "Shape":
+            continue
+        target_names.append(str(target.prop(1)).split("\x00\x01", 1)[0])
+    assert target_names == ["Smile@0", "Smile@0.5", "Smile@0.75", "Smile@1"], target_names
     assert any(str(node.prop(1)).startswith("Blink\x00\x01") for node in channels)
 
     assert any(group.get("controller") == "Smile" for group in read_groups(key))

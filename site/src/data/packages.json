@@ -5,7 +5,7 @@
       "name": "In Between Shape Key",
       "group_id": "in_between_shape_key",
       "group_label": "In Between Shape Key",
-      "version": "2026.08.09",
+      "version": "2026.08.10",
       "blender_target": "4.2",
       "url": null,
       "doc_link": "/addons/in-between-shape-key/"
@@ -74,6 +74,16 @@
       "url": "https://github.com/Mushus/blender-addons/releases/download/release-2026.08.09-2/uv_island_mask-2026.08.04-blender4.2.zip",
       "doc_link": "/addons/uv-island-mask/",
       "name": "UV Island Mask"
+    },
+    {
+      "id": "weight_heat",
+      "name": "Heat Weight",
+      "group_id": "weight_utility",
+      "group_label": "Weight Utility",
+      "version": "2026.08.10",
+      "blender_target": "4.2",
+      "url": null,
+      "doc_link": "/addons/weight-heat/"
     },
     {
       "id": "weight_isolate",

@@ -76,9 +76,13 @@ export default defineConfig({
           lang: 'en',
         },
       },
-      social: {
-        github: 'https://github.com/Mushus/blender-addons',
-      },
+      social: [
+        {
+          icon: 'github',
+          label: 'GitHub',
+          href: 'https://github.com/Mushus/blender-addons',
+        },
+      ],
       sidebar: [
         {
           label: 'ガイド',

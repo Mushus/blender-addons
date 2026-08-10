@@ -15,14 +15,14 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@astrojs/starlight": "^0.32.0",
-    "astro": "^5.2.0",
+    "@astrojs/starlight": "^0.41.7",
+    "astro": "^7.2.0",
     "astro-mermaid": "^2.1.0",
     "mermaid": "^11.16.1",
-    "sharp": "^0.33.5"
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
-    "eslint": "^10.8.0",
+    "eslint": "^10.8.1",
     "eslint-plugin-astro": "^3.1.0",
     "prettier": "^3.9.6",
     "prettier-plugin-astro": "^0.14.1",
