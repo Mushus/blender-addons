@@ -10,6 +10,7 @@ from bpy.app.translations import pgettext_iface
 from bpy_extras.io_utils import axis_conversion
 from mathutils import Matrix
 
+from .metadata import is_basis_block, parse_target_name
 from .postprocess import process_file
 from .validation import validate_all_meshes
 
@@ -22,7 +23,11 @@ def _has_annotated_shape_keys() -> bool:
     return any(
         obj.type == "MESH"
         and obj.data.shape_keys is not None
-        and any("@" in block.name for block in obj.data.shape_keys.key_blocks)
+        and any(
+            not is_basis_block(obj.data.shape_keys, block)
+            and parse_target_name(block.name) is not None
+            for block in obj.data.shape_keys.key_blocks
+        )
         for obj in bpy.data.objects
     )
 

@@ -5,7 +5,7 @@ from collections import defaultdict
 
 from bpy.app.translations import pgettext_iface
 
-from .metadata import format_target_name, normalize_position, parse_target_name
+from .metadata import format_target_name, is_basis_block, normalize_position, parse_target_name
 
 _SYNCING_KEYS: set[int] = set()
 _CONTROLLER_VALUE_PREFIX = "_fbxi_inbetween_value_"
@@ -46,6 +46,8 @@ def groups_from_names(key) -> list[dict]:
     """Infer all channels and their targets directly from Shape Key names."""
     grouped: dict[str, list[dict]] = defaultdict(list)
     for index, block in enumerate(key.key_blocks):
+        if is_basis_block(key, block):
+            continue
         spec = parse_target_name(block.name)
         if spec is None:
             continue
@@ -55,7 +57,7 @@ def groups_from_names(key) -> list[dict]:
     groups = []
     for channel, members in sorted(grouped.items()):
         controller = key.key_blocks.get(channel)
-        if controller is None or controller.name == "Basis":
+        if controller is None or is_basis_block(key, controller):
             controller_name = ""
         else:
             controller_name = controller.name
@@ -104,6 +106,8 @@ def group_for_channel(key, channel: str) -> dict | None:
 def _target_members(key, channel: str) -> list[dict]:
     members = []
     for index, block in enumerate(key.key_blocks):
+        if is_basis_block(key, block):
+            continue
         spec = parse_target_name(block.name)
         if spec is None or spec.channel != channel:
             continue
@@ -172,6 +176,8 @@ def _normalize_linked_target_names(key) -> None:
     """Propagate a controller rename through targets linked by its live driver."""
     linked_by_path: dict[str, list[tuple[object, object]]] = defaultdict(list)
     for block in key.key_blocks:
+        if is_basis_block(key, block):
+            continue
         spec = parse_target_name(block.name)
         if spec is None:
             continue
@@ -180,7 +186,7 @@ def _normalize_linked_target_names(key) -> None:
             linked_by_path[source_path].append((block, spec))
 
     for controller in key.key_blocks:
-        if controller.name == "Basis" or parse_target_name(controller.name) is not None:
+        if is_basis_block(key, controller) or parse_target_name(controller.name) is not None:
             continue
         source_path = _controller_source_path(key, controller)
         if source_path is None:

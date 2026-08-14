@@ -3,11 +3,13 @@ from __future__ import annotations
 import bpy
 from bpy.app.translations import pgettext_iface
 
+from .metadata import is_basis_block, parse_target_name
 from .operator import (
     FBXI_OT_add_existing_key,
     FBXI_OT_convert_to_inbetween,
     FBXI_OT_remove_target,
     FBXI_OT_select_target,
+    FBXI_OT_set_target_position,
 )
 from .sync import controller_value_path, controller_value_property, read_groups
 from .validation import validate_shape_keys
@@ -24,18 +26,27 @@ def _draw_target_row(layout, context, obj, key, member, active_name):
         return
 
     row = layout.row(align=True)
-    button = row.operator(
+    select_button = row.operator(
         FBXI_OT_select_target.bl_idname,
         text="",
         icon="KEYTYPE_KEYFRAME_VEC",
         depress=target_name == active_name,
     )
-    button.position = float(member["position"])
-    button.target_name = target_name
+    select_button.target_name = target_name
 
     controls = row.row(align=True)
     controls.enabled = obj.mode == "OBJECT"
-    controls.prop(button, "position", text="", slider=True)
+    position_button = controls.operator(
+        FBXI_OT_set_target_position.bl_idname,
+        text="",
+        emboss=False,
+    )
+    # Assign position before target_name. Setting an operator property can run
+    # its update callback while the panel is being drawn; the empty target name
+    # keeps the draw callback read-only. The live UI instance has both values.
+    position_button.position = float(member["position"])
+    position_button.target_name = target_name
+    controls.prop(position_button, "position", text="", slider=True)
     remove = controls.operator(FBXI_OT_remove_target.bl_idname, text="", icon="X")
     remove.target_name = target_name
 
@@ -103,8 +114,11 @@ def draw_shape_key_inbetween(self, context):
         None,
     )
     if active_group is None:
-        multiple_selected = sum(bool(block.select) for block in key.key_blocks) > 1
-        if active is not None and active_name != "Basis" and "@" not in active_name and not multiple_selected:
+        if (
+            active is not None
+            and not is_basis_block(key, active)
+            and parse_target_name(active_name) is None
+        ):
             box = layout.box()
             box.label(text=_message("Shape Key: {name}", name=active_name))
             box.operator(
@@ -179,10 +193,8 @@ class FBXI_MT_add_existing_key(bpy.types.Menu):
         existing = [
             block
             for block in key.key_blocks
-            if block.name != "Basis"
+            if not is_basis_block(key, block)
             and block.name != controller.name
-            and "@" not in block.name
-            and not any(other.get("controller") == block.name for other in read_groups(key))
         ]
         if not existing:
             layout.label(text="No existing Shape Keys available", icon="INFO")

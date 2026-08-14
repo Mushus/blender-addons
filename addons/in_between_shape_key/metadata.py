@@ -16,12 +16,17 @@ class TargetSpec:
     position: float
 
 
+def is_basis_block(key, block) -> bool:
+    """Return whether block is Blender's basis Shape Key."""
+    return len(key.key_blocks) > 0 and key.key_blocks[0] == block
+
+
 def parse_target_name(name: str) -> TargetSpec | None:
     """Parse the add-on's Name@Position convention.
 
-    Names without an at-sign are ordinary shape keys. Names containing an
-    at-sign but not matching the grammar are invalid and are reported by
-    validate_shape_keys.
+    Any name that does not match the complete convention is an ordinary
+    shape key. This includes names containing an at-sign with a non-numeric
+    suffix, such as ``Thickness@Thin``.
     """
     match = _NAME_RE.fullmatch(name)
     if match is None:
@@ -34,10 +39,6 @@ def parse_target_name(name: str) -> TargetSpec | None:
     if position_text != format_position(position):
         return None
     return TargetSpec(channel=channel, position=position)
-
-
-def has_at_sign(name: str) -> bool:
-    return "@" in name
 
 
 def format_position(position: float) -> str:

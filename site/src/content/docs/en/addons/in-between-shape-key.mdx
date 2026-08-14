@@ -28,7 +28,7 @@ import AddonDownloadLink from '../../../../components/AddonDownloadLink.astro';
 
 1. Select one ordinary Shape Key and run **Convert to In-Between Shape Key**. Its original shape becomes the initial `@1` key.
 2. Set the controller **Value** to the desired position, then use the down-arrow beside Value to select an existing Shape Key. The selected key is renamed to `Controller@Value`.
-3. Drag a target row's slider or enter a number to move the key between `0.000` and `1.000`. The displayed value is read directly from the name, and editing it renames the key immediately (for example, `Smile@0.5`). `@.5` and `@0.500` are invalid. An `@0` target is applied when Value is zero. The last key's shape remains constant through 100%.
+3. Drag a target row's slider or enter a number to move the key between `0.000` and `1.000`. The displayed value is read directly from the name, and editing it renames the key immediately (for example, `Smile@0.5`). `@.5` and `@0.500` are not recognized as In-Between targets and remain ordinary Shape Keys. An `@0` target is applied when Value is zero. The last key's shape remains constant through 100%.
 
 `@1` is optional. During FBX export, the highest target shape is duplicated at position 1, which encodes the flat final segment through FBX 100%.
 

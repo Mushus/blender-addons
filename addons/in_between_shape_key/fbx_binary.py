@@ -5,6 +5,8 @@ import zlib
 from dataclasses import dataclass, field
 
 MAGIC = b"Kaydara FBX Binary  \x00\x1a\x00"
+FOOTER_ID = bytes.fromhex("fa bc ab 09 d0 c8 d4 66 b1 76 fb 83 1c f7 26 7e")
+FOOTER_MAGIC = bytes.fromhex("f8 5a 8c 6a de f5 d9 7e ec e9 0c e3 75 8f 29 0b")
 
 
 @dataclass
@@ -95,6 +97,12 @@ class FBXBinary:
             output.extend(encoded)
             position += len(encoded)
         output.extend(b"\x00" * self.null_size)
+        output.extend(FOOTER_ID)
+        while len(output) % 16:
+            output.append(0)
+        output.extend(struct.pack("<I", self.version))
+        output.extend(b"\x00" * 120)
+        output.extend(FOOTER_MAGIC)
         with open(path, "wb") as handle:
             handle.write(output)
 

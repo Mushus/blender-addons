@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import bpy
 from bpy.app.translations import pgettext_iface
+from bpy_extras.io_utils import ExportHelper
 
 from .exporter import export_with_inbetweens
-from .metadata import format_target_name, normalize_position, parse_target_name
+from .metadata import format_target_name, is_basis_block, normalize_position, parse_target_name
 from .sync import (
     clear_shape_to_basis,
-    controller_group,
     get_controller_value,
     rescan_key,
     sync_key,
@@ -59,19 +59,13 @@ def _update_selected_target_position(operator, context) -> None:
     operator.target_name = target_name
 
 
-def _has_multiple_selected_shape_keys(key) -> bool:
-    return sum(bool(block.select) for block in key.key_blocks) > 1
-
-
 def _existing_shape_key_items(operator, context):
     key = _active_key(context)
     if key is None:
         return []
     items = []
     for block in key.key_blocks:
-        if block.name == "Basis" or block.name == operator.controller_name:
-            continue
-        if parse_target_name(block.name) is not None or controller_group(key, block.name) is not None:
+        if is_basis_block(key, block) or block.name == operator.controller_name:
             continue
         items.append((block.name, block.name, "Add this existing Shape Key as an In-Between"))
     return items
@@ -132,7 +126,7 @@ class FBXI_OT_add_existing_key(bpy.types.Operator):
 
     def invoke(self, context, _event):
         if not _existing_shape_key_items(self, context):
-            self.report({"ERROR"}, _message("No ordinary existing Shape Keys are available"))
+            self.report({"ERROR"}, _message("No existing Shape Keys are available"))
             return {"CANCELLED"}
         self.source_name = _existing_shape_key_items(self, context)[0][0]
         return context.window_manager.invoke_props_dialog(self)
@@ -161,14 +155,11 @@ class FBXI_OT_add_existing_key(bpy.types.Operator):
         if controller is None or source is None:
             self.report({"ERROR"}, _message("The selected Shape Key is no longer available"))
             return {"CANCELLED"}
-        if controller.name == "Basis" or parse_target_name(controller.name) is not None:
+        if is_basis_block(key, controller) or parse_target_name(controller.name) is not None:
             self.report({"ERROR"}, _message("Select an In-Between controller"))
             return {"CANCELLED"}
-        if source == key.key_blocks[0] or source == controller or parse_target_name(source.name) is not None:
-            self.report({"ERROR"}, _message("Select an ordinary existing Shape Key"))
-            return {"CANCELLED"}
-        if controller_group(key, source.name) is not None:
-            self.report({"ERROR"}, _message("An In-Between controller cannot be used as a target"))
+        if is_basis_block(key, source) or source == controller:
+            self.report({"ERROR"}, _message("Select an existing Shape Key other than the controller"))
             return {"CANCELLED"}
 
         controller_value = get_controller_value(obj, controller.name)
@@ -199,11 +190,9 @@ class FBXI_OT_convert_to_inbetween(bpy.types.Operator):
         obj = context.object
         if obj is None or obj.type != "MESH" or obj.data.shape_keys is None or obj.mode != "OBJECT":
             return False
-        active = obj.active_shape_key
-        if active is None or active.name == "Basis" or "@" in active.name:
-            return False
         key = obj.data.shape_keys
-        if _has_multiple_selected_shape_keys(key):
+        active = obj.active_shape_key
+        if active is None or is_basis_block(key, active) or parse_target_name(active.name) is not None:
             return False
         endpoint_name = format_target_name(active.name.strip(), 1.0)
         return key.key_blocks.get(endpoint_name) is None
@@ -212,11 +201,11 @@ class FBXI_OT_convert_to_inbetween(bpy.types.Operator):
         obj = context.object
         key = _active_key(context)
         active = obj.active_shape_key
-        if key is None or active is None or active.name == "Basis":
+        if key is None or active is None or is_basis_block(key, active):
             self.report({"ERROR"}, _message("Select a Shape Key controller first"))
             return {"CANCELLED"}
 
-        if "@" in active.name:
+        if parse_target_name(active.name) is not None:
             self.report({"ERROR"}, _message("The active Shape Key is already an in-between target"))
             return {"CANCELLED"}
 
@@ -270,7 +259,7 @@ class FBXI_OT_remove_target(bpy.types.Operator):
         key = _active_key(context)
         target = key.key_blocks.get(self.target_name) if key is not None else None
         spec = parse_target_name(self.target_name)
-        if target is None or spec is None:
+        if target is None or spec is None or is_basis_block(key, target):
             self.report({"ERROR"}, _message("Select an in-between target"))
             return {"CANCELLED"}
         obj = context.object
@@ -288,6 +277,28 @@ class FBXI_OT_select_target(bpy.types.Operator):
     bl_description = "Select this Shape Key target"
 
     target_name: bpy.props.StringProperty(name="Target")
+
+    @classmethod
+    def poll(cls, context) -> bool:
+        obj = context.object
+        return obj is not None and obj.type == "MESH" and obj.data.shape_keys is not None
+
+    def execute(self, context):
+        key = _active_key(context)
+        target = key.key_blocks.get(self.target_name) if key is not None else None
+        if target is None or is_basis_block(key, target):
+            self.report({"ERROR"}, _message("Select an existing Shape Key target"))
+            return {"CANCELLED"}
+        context.object.active_shape_key_index = key.key_blocks.find(target.name)
+        return {"FINISHED"}
+
+
+class FBXI_OT_set_target_position(bpy.types.Operator):
+    bl_idname = "fbx_shape_inbetween.set_target_position"
+    bl_label = "Set In-Between Target Position"
+    bl_description = "Change this in-between Shape Key target position"
+
+    target_name: bpy.props.StringProperty(name="Target", options={"HIDDEN"})
     position: bpy.props.FloatProperty(
         name="Position",
         description="Position of this in-between Shape Key",
@@ -305,16 +316,37 @@ class FBXI_OT_select_target(bpy.types.Operator):
     @classmethod
     def poll(cls, context) -> bool:
         obj = context.object
-        return obj is not None and obj.type == "MESH" and obj.data.shape_keys is not None
+        return (
+            obj is not None
+            and obj.type == "MESH"
+            and obj.data.shape_keys is not None
+            and obj.mode == "OBJECT"
+        )
 
     def execute(self, context):
         key = _active_key(context)
         target = key.key_blocks.get(self.target_name) if key is not None else None
-        if target is None:
+        if target is None or is_basis_block(key, target):
             self.report({"ERROR"}, _message("Select an existing Shape Key target"))
             return {"CANCELLED"}
-        context.object.active_shape_key_index = key.key_blocks.find(target.name)
-        return {"FINISHED"}
+        spec = parse_target_name(target.name)
+        if spec is None or is_basis_block(key, target):
+            self.report({"ERROR"}, _message("Select an existing Shape Key target"))
+            return {"CANCELLED"}
+        if rename_target_position(target, self.position):
+            from .sync import sync_key
+
+            sync_key(key, context.object)
+            context.object.active_shape_key_index = key.key_blocks.find(target.name)
+            return {"FINISHED"}
+        self.report(
+            {"ERROR"},
+            _message(
+                "In-between already exists: {name}",
+                name=format_target_name(spec.channel, self.position),
+            ),
+        )
+        return {"CANCELLED"}
 
 
 def make_export_operator():
@@ -323,15 +355,28 @@ def make_export_operator():
     fbx_module = importlib.import_module("io_scene_fbx")
     base = fbx_module.ExportFBX
 
+    # Do not inherit from the registered standard FBX operator. Blender's RNA
+    # registration then replaces the Python implementation behind
+    # ``export_scene.fbx`` with a generated wrapper, leaving the standard menu
+    # item as a silent no-op. Reuse its property declarations and UI methods
+    # while registering an independent operator instead.
+    annotations = dict(getattr(ExportHelper, "__annotations__", {}))
+    annotations.update(getattr(base, "__annotations__", {}))
+
     def execute(self, context):
         return export_with_inbetweens(self, context)
 
     return type(
         "FBXI_OT_export_fbx_settings",
-        (base,),
+        (bpy.types.Operator, ExportHelper),
         {
+            "__annotations__": annotations,
             "bl_idname": "export_scene.fbx_shape_inbetween",
             "bl_label": "Export In Between Shape Key",
+            "bl_options": set(base.bl_options),
+            "filename_ext": base.filename_ext,
+            "draw": base.draw,
+            "check_extension": base.check_extension,
             "execute": execute,
             "_fbx_module": fbx_module,
         },

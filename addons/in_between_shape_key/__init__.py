@@ -133,6 +133,7 @@ def register():
         operator.FBXI_OT_add_existing_key,
         operator.FBXI_OT_remove_target,
         operator.FBXI_OT_select_target,
+        operator.FBXI_OT_set_target_position,
     )
 
     state = runtime_mod.begin_state()
@@ -174,15 +175,13 @@ def register():
         load_post_handlers.append(_load_post_handler)
         state["handlers"].append((load_post_handlers, _load_post_handler))
 
-    fbx_module = importlib.import_module("io_scene_fbx")
-    original_menu = getattr(fbx_module, "menu_func_export", None)
-    if original_menu is not None:
-        try:
-            bpy.types.TOPBAR_MT_file_export.remove(original_menu)
-        except (RuntimeError, ValueError):
-            pass
+    importlib.import_module("io_scene_fbx")
+    # Keep Blender's standard FBX entry.  The in-between exporter is a
+    # separate operator and must extend the menu rather than replace it.
     bpy.types.TOPBAR_MT_file_export.append(_menu_func_export)
-    state["fbx_menu"] = {"custom": _menu_func_export, "original": original_menu}
+    # ``original`` is retained in the runtime schema for cleanup of installs
+    # made by older versions, but this version never removes that callback.
+    state["fbx_menu"] = {"custom": _menu_func_export, "original": None}
     # Blender restricts bpy.data while an add-on is registering. A zero-delay
     # timer performs the initial name scan as soon as registration completes.
     _schedule_sync()

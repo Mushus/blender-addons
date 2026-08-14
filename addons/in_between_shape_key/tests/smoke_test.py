@@ -42,6 +42,48 @@ def _connections(scene):
     return result
 
 
+def _export_menu_draws():
+    menu = bpy.types.TOPBAR_MT_file_export
+    for attr in ("draw_funcs", "_draw_funcs"):
+        funcs = getattr(menu, attr, None)
+        if funcs:
+            return list(funcs)
+    return list(menu._dyn_ui_initialize())
+
+
+def _assert_standard_fbx_export_is_preserved():
+    # 背景情報: In-Between Shape Key は標準 FBX メニュー描画関数を削除して、
+    # 専用の書き出し項目だけを登録していた。
+    # なぜやるか: 標準 FBX オペレーターと専用オペレーターを同時に利用できる
+    # ことを、登録直後の実際のメニュー登録状態で固定する。
+    import io_scene_fbx
+
+    standard_menu = io_scene_fbx.menu_func_export
+    custom_menu = bpy.app.driver_namespace["in_between_shape_key.runtime.v1"]["fbx_menu"]["custom"]
+    draws = _export_menu_draws()
+    assert standard_menu in draws, "Standard FBX export menu entry was overwritten"
+    assert custom_menu in draws, "In-Between FBX export menu entry was not registered"
+    assert hasattr(bpy.ops.export_scene, "fbx"), "Standard FBX export operator is unavailable"
+
+    # 背景情報: 標準メニューの項目が残っていても、カスタムオペレーターの
+    # RNA登録によって標準オペレーターの実装が壊れると、実行結果だけが
+    # FINISHED になりファイルが作られない。
+    # なぜやるか: ユーザーが標準 FBX (.fbx) を選択したときに実際の FBX
+    # ファイルが生成されることまで確認する。
+    output = ROOT / "tmp" / "blender-fbxi-standard-regression.fbx"
+    output.unlink(missing_ok=True)
+    try:
+        result = bpy.ops.export_scene.fbx(
+            "EXEC_DEFAULT",
+            filepath=str(output),
+            check_existing=False,
+        )
+        assert result == {"FINISHED"}, result
+        assert output.is_file() and output.stat().st_size > 0
+    finally:
+        output.unlink(missing_ok=True)
+
+
 class _RecordingLayout:
     """Small UILayout stand-in for exercising the panel draw callback headlessly."""
 
@@ -140,6 +182,7 @@ def _assert_inbetween_panel_draws(obj):
         FBXI_OT_convert_to_inbetween,
         FBXI_OT_remove_target,
         FBXI_OT_select_target,
+        FBXI_OT_set_target_position,
     )
     from in_between_shape_key.ui import draw_shape_key_inbetween, draw_shape_key_specials
 
@@ -159,6 +202,7 @@ def _assert_inbetween_panel_draws(obj):
     assert sum(event[0] == "menu" for event in panel.layout.events) == 1, panel.layout.events
     assert sum(event[0] == "box" for event in panel.layout.events) == 1, panel.layout.events
     assert sum(event == ("operator", FBXI_OT_select_target.bl_idname) for event in panel.layout.events) == 3
+    assert sum(event == ("operator", FBXI_OT_set_target_position.bl_idname) for event in panel.layout.events) == 2
     assert sum(
         event == ("operator_text", FBXI_OT_select_target.bl_idname, "")
         for event in panel.layout.events
@@ -200,9 +244,10 @@ def _assert_inbetween_panel_draws(obj):
     labels = [event[1] for event in panel.layout.events if event[0] == "label"]
     assert "Shape Key Controllers" not in labels, panel.layout.events
 
-    # An ordinary unmanaged shape key presents a "Convert to In-Between" action.
-    unmanaged = obj.shape_key_add(name="Wink")
-    obj.active_shape_key_index = key.key_blocks.find("Wink")
+    # A non-canonical at-sign name is still an ordinary Shape Key and presents
+    # a "Convert to In-Between" action.
+    unmanaged = obj.shape_key_add(name="Thickness@Thin")
+    obj.active_shape_key_index = key.key_blocks.find("Thickness@Thin")
     for block in key.key_blocks:
         block.select = block == unmanaged
     panel = _RecordingPanel()
@@ -224,7 +269,7 @@ def _assert_inbetween_panel_draws(obj):
             for event in menu.layout.events
         )
 
-    obj.active_shape_key_index = key.key_blocks.find("Wink")
+    obj.active_shape_key_index = key.key_blocks.find("Thickness@Thin")
     for block in key.key_blocks:
         block.select = block == unmanaged
     menu = _RecordingPanel()
@@ -234,17 +279,18 @@ def _assert_inbetween_panel_draws(obj):
         for event in menu.layout.events
     )
 
-    # Multiple tree selections hide Convert instead of presenting a disabled action.
+    # Multiple tree selections do not change the active Shape Key conversion
+    # target. The operator acts on the active key only.
     key.key_blocks["Smile"].select = True
     panel = _RecordingPanel()
     draw_shape_key_inbetween(panel, bpy.context)
-    assert not any(event == ("operator", FBXI_OT_convert_to_inbetween.bl_idname) for event in panel.layout.events), (
+    assert any(event == ("operator", FBXI_OT_convert_to_inbetween.bl_idname) for event in panel.layout.events), (
         panel.layout.events
     )
     menu = _RecordingPanel()
     draw_shape_key_specials(menu, SimpleNamespace(object=obj))
-    assert not any(event == ("operator", FBXI_OT_convert_to_inbetween.bl_idname) for event in menu.layout.events)
-    assert not FBXI_OT_convert_to_inbetween.poll(bpy.context)
+    assert any(event == ("operator", FBXI_OT_convert_to_inbetween.bl_idname) for event in menu.layout.events)
+    assert FBXI_OT_convert_to_inbetween.poll(bpy.context)
     obj.shape_key_remove(unmanaged)
 
     print("Shape Key panel draw test passed (in-between and controller selection)")
@@ -507,13 +553,14 @@ def _assert_canonical_position_validation():
         normalize_position,
         parse_target_name,
     )
-    from in_between_shape_key.sync import sync_key
+    from in_between_shape_key.sync import read_groups, sync_key
     from in_between_shape_key.validation import validate_shape_keys
 
     # Background: target names use the same 0..1 factor shown in the UI.
     # Non-canonical spellings must never enter
     # driver synchronization and create a zero-width interpolation span.
-    # Arrange: create a valid @0.5 target and forbidden equivalent spellings.
+    # Arrange: create a valid @0.5 target and ordinary names that merely
+    # contain an at-sign.
     mesh = bpy.data.meshes.new("FBXI Duplicate Numeric Weight Mesh")
     mesh.from_pydata([(0, 0, 0), (1, 0, 0), (0, 1, 0)], [], [(0, 1, 2)])
     mesh.update()
@@ -526,19 +573,34 @@ def _assert_canonical_position_validation():
         assert parse_target_name("Precise@.123") is None
         assert parse_target_name("Precise@0.1230") is None
         obj.shape_key_add(name="Basis")
+        basis = mesh.shape_keys.key_blocks[0]
+        basis.name = "Ignored@0.5"
         obj.shape_key_add(name="Duplicate")
         obj.shape_key_add(name="Duplicate@0.5")
         obj.shape_key_add(name="Duplicate@0.500")
+        obj.shape_key_add(name="Thickness@Thin")
 
         # Act: validate and run the same synchronization used by the timer.
         result = validate_shape_keys(mesh.shape_keys)
         sync_key(mesh.shape_keys, obj)
 
-        # Assert: the non-canonical name is rejected and receives no driver.
-        assert result.errors == ("Invalid shape key name at index 3: Duplicate@0.500",), result.errors
+        # Assert: non-canonical names are ordinary Shape Keys and receive no driver.
+        assert result.errors == (), result.errors
+        assert result.warnings == (), result.warnings
+        assert not any(group["channel"] == "Ignored" for group in read_groups(mesh.shape_keys))
+        basis_path = basis.path_from_id("value")
+        assert all(
+            fcurve.data_path != basis_path
+            for fcurve in mesh.shape_keys.animation_data.drivers
+        )
         invalid_path = mesh.shape_keys.key_blocks["Duplicate@0.500"].path_from_id("value")
         assert all(
             fcurve.data_path != invalid_path
+            for fcurve in mesh.shape_keys.animation_data.drivers
+        )
+        ordinary_path = mesh.shape_keys.key_blocks["Thickness@Thin"].path_from_id("value")
+        assert all(
+            fcurve.data_path != ordinary_path
             for fcurve in mesh.shape_keys.animation_data.drivers
         )
         assert all(
@@ -548,6 +610,67 @@ def _assert_canonical_position_validation():
     finally:
         bpy.data.objects.remove(obj, do_unlink=True)
     print("Canonical position validation regression test passed")
+
+
+def _assert_name_only_group_assignment():
+    from in_between_shape_key.operator import _existing_shape_key_items
+    from in_between_shape_key.sync import read_groups, sync_key
+
+    # 背景情報: Name@Position is the only persistent membership contract. An
+    # existing target or controller may therefore be moved into another group
+    # by assigning its canonical target name.
+    # なぜやるか: UI filtering must not impose an "ordinary Shape Key only"
+    # rule that contradicts reconstruction from current names.
+    mesh = bpy.data.meshes.new("FBXI Name Only Assignment Mesh")
+    mesh.from_pydata([(0, 0, 0), (1, 0, 0), (0, 1, 0)], [], [(0, 1, 2)])
+    mesh.update()
+    obj = bpy.data.objects.new("FBXI Name Only Assignment Object", mesh)
+    bpy.context.collection.objects.link(obj)
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    try:
+        obj.shape_key_add(name="Basis")
+        main = obj.shape_key_add(name="Main")
+        obj.shape_key_add(name="Main@1")
+        obj.shape_key_add(name="Other")
+        obj.shape_key_add(name="Other@0.5")
+        obj.shape_key_add(name="Third")
+        obj.shape_key_add(name="Third@1")
+        sync_key(mesh.shape_keys, obj)
+
+        items = {
+            item[0]
+            for item in _existing_shape_key_items(
+                SimpleNamespace(controller_name="Main"),
+                bpy.context,
+            )
+        }
+        assert {"Other", "Other@0.5", "Third", "Third@1"} <= items, items
+
+        _set_controller_value(obj, main, 0.5)
+        assert bpy.ops.fbx_shape_inbetween.add_existing_key(
+            controller_name="Main",
+            source_name="Other@0.5",
+        ) == {"FINISHED"}
+        assert mesh.shape_keys.key_blocks.get("Main@0.5") is not None
+        assert mesh.shape_keys.key_blocks.get("Other@0.5") is None
+
+        _set_controller_value(obj, main, 0.25)
+        assert bpy.ops.fbx_shape_inbetween.add_existing_key(
+            controller_name="Main",
+            source_name="Third",
+        ) == {"FINISHED"}
+        sync_key(mesh.shape_keys, obj)
+        assert mesh.shape_keys.key_blocks.get("Main@0.25") is not None
+        assert mesh.shape_keys.key_blocks.get("Third") is None
+        assert mesh.shape_keys.key_blocks.get("Third@1") is not None
+        main_group = next(group for group in read_groups(mesh.shape_keys) if group["channel"] == "Main")
+        assert {member["name"] for member in main_group["members"]} == {
+            "Main@0.25", "Main@0.5", "Main@1",
+        }
+    finally:
+        bpy.data.objects.remove(obj, do_unlink=True)
+    print("Name-only group assignment regression test passed")
 
 
 def _assert_managed_animation_rebuild():
@@ -789,6 +912,7 @@ def _assert_add_reorder_and_rename_order_independence():
     from in_between_shape_key.metadata import parse_target_name
     from in_between_shape_key.sync import controller_value_path, read_groups, sync_key
     from in_between_shape_key.ui import draw_shape_key_inbetween
+    from in_between_shape_key.validation import validate_shape_keys
 
     # Background: target membership used to be inferred from adjacency. Adding
     # an existing key or moving keys around could therefore bind the wrong row
@@ -825,6 +949,7 @@ def _assert_add_reorder_and_rename_order_independence():
     # user's physical ordering.
     sync_key(key, obj)
     assert [block.name for block in key.key_blocks] == scattered_order
+    assert validate_shape_keys(key).warnings == ()
     assert {member["name"] for member in read_groups(key)[0]["members"]} == {
         "Bold@0.25", "Bold@0.5", "Bold@1",
     }
@@ -934,6 +1059,7 @@ def main():
         raise AssertionError("In Between Shape Key panel class is not registered")
     if not bpy.types.MESH_MT_shape_key_context_menu.is_extended():
         raise AssertionError("In Between Shape Key was not added to the Shape Key context menu")
+    _assert_standard_fbx_export_is_preserved()
     _assert_japanese_translation()
     from in_between_shape_key.fbx_binary import FBXBinary
     from in_between_shape_key.sync import read_groups, sync_key
@@ -965,6 +1091,16 @@ def main():
     custom_props_before_draw = set(key.keys())
     node_groups_before_draw = {node_group.name for node_group in bpy.data.node_groups}
     _assert_inbetween_panel_draws(obj)
+    # 背景情報: ターゲット行のキーフレームアイコンは選択だけを行い、位置変更用
+    # オペレーターの更新コールバックを持たない。
+    # なぜやるか: Blender の Properties UI からアイコンをクリックしたときに
+    # Shape Key 名を変更する経路へ入らず、強制終了の回帰を防ぐ。
+    from in_between_shape_key.operator import FBXI_OT_select_target
+
+    select_properties = {prop.identifier for prop in FBXI_OT_select_target.bl_rna.properties}
+    assert "position" not in select_properties
+    assert bpy.ops.fbx_shape_inbetween.select_target(target_name="Smile@0.5") == {"FINISHED"}
+    assert obj.active_shape_key.name == "Smile@0.5"
     assert set(key.keys()) == custom_props_before_draw, "UI draw mutated Shape Key custom properties"
     assert {node_group.name for node_group in bpy.data.node_groups} == node_groups_before_draw, (
         "UI draw created or removed a node group"
@@ -1073,6 +1209,18 @@ def main():
     )
     assert result == {"FINISHED"}, result
     in_between_shape_key._sync_timer()
+    # 背景情報: Blender の標準 FBX にはトップレベル NULL の後にフッターがあり、
+    # Unity はこの終端構造を含む FBX を要求する。
+    # なぜやるか: in-between 後処理がノードだけを書き出してフッターを落とす回帰を防ぐ。
+    exported_bytes = output.read_bytes()
+    assert exported_bytes[-16:] == bytes.fromhex(
+        "f8 5a 8c 6a de f5 d9 7e ec e9 0c e3 75 8f 29 0b"
+    )
+    footer_version_offset = len(exported_bytes) - 16 - 120 - 4
+    assert footer_version_offset % 16 == 0
+    assert int.from_bytes(
+        exported_bytes[footer_version_offset : footer_version_offset + 4], "little"
+    ) == int.from_bytes(exported_bytes[23:27], "little")
     _assert_managed_drivers(
         obj,
         key,
@@ -1142,6 +1290,7 @@ def main():
     _assert_existing_canonical_names_sync_automatically()
     _assert_manual_group_rename_keeps_slider()
     _assert_canonical_position_validation()
+    _assert_name_only_group_assignment()
     _assert_add_reorder_and_rename_order_independence()
     bpy.data.objects.remove(obj, do_unlink=True)
     _assert_managed_animation_rebuild()
@@ -1152,6 +1301,13 @@ def main():
     result = bpy.ops.preferences.addon_disable(module="in_between_shape_key")
     if result != {"FINISHED"}:
         raise AssertionError(f"in_between_shape_key did not disable: {result}")
+    # The standard FBX entry must remain after the add-on removes its own menu
+    # callback; disabling the add-on must not remove Blender functionality.
+    import io_scene_fbx
+
+    assert io_scene_fbx.menu_func_export in _export_menu_draws(), (
+        "Standard FBX export menu entry was removed during add-on cleanup"
+    )
 
     # Reload-while-enabled must not leak Python/RNA registrations.
     baseline_depsgraph = len(bpy.app.handlers.depsgraph_update_pre)

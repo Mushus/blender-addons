@@ -63,14 +63,16 @@ TRANSLATIONS = {
         ("Operator", "Remove this in-between Shape Key target"): "このインビトウィーン・シェイプキーのターゲットを削除",
         ("Operator", "Select In-Between Target"): "インビトウィーンターゲットを選択",
         ("Operator", "Select this Shape Key target"): "このシェイプキーターゲットを選択",
+        ("Operator", "Set In-Between Target Position"): "インビトウィーンターゲットの位置を設定",
+        ("Operator", "Change this in-between Shape Key target position"):
+            "このインビトウィーン・シェイプキーターゲットの位置を変更",
         ("Operator", "Export In Between Shape Key"): "インビトウィーン・シェイプキーを出力",
         ("*", "Shape Key in-between groups re-evaluated"): "シェイプキーのインビトウィーングループを再評価しました",
         ("*", "Shape Key in-between validation passed"): "インビトウィーン・シェイプキーの検証に合格しました",
-        ("*", "No ordinary existing Shape Keys are available"): "追加できる通常のシェイプキーがありません",
+        ("*", "No existing Shape Keys are available"): "追加できるシェイプキーがありません",
         ("*", "The selected Shape Key is no longer available"): "選択したシェイプキーは利用できません",
         ("*", "Select an In-Between controller"): "インビトウィーンのコントローラーを選択してください",
-        ("*", "Select an ordinary existing Shape Key"): "通常の既存シェイプキーを選択してください",
-        ("*", "An In-Between controller cannot be used as a target"): "インビトウィーンのコントローラーはターゲットにできません",
+        ("*", "Select an existing Shape Key other than the controller"): "コントローラー以外の既存シェイプキーを選択してください",
         ("*", "Set the controller Value between 0.0 and 1.0 before adding an in-between"):
             "追加前にコントローラーの値を0.0から1.0の範囲に設定してください",
         ("*", "Set the Shape Key Value between 0.0 and 1.0 before conversion"):
@@ -87,11 +89,8 @@ TRANSLATIONS = {
         ("*", "Select an in-between target"): "インビトウィーンターゲットを選択してください",
         ("*", "Removed {name}"): "{name}を削除しました",
         ("*", "Select an existing Shape Key target"): "既存のシェイプキーターゲットを選択してください",
-        ("*", "Invalid shape key name at index {index}: {name}"): "インデックス{index}のシェイプキー名が不正です: {name}",
         ("*", "Position must be between 0 and 1: {name}"): "位置は0から1の範囲にしてください: {name}",
         ("*", "Duplicate in-between position in {channel}"): "{channel}に重複するインビトウィーン位置があります",
-        ("*", "Targets in {channel} will be sorted by position on export"):
-            "{channel}のターゲットは出力時に位置順へ並べ替えられます",
         ("*", "Batch FBX export is not supported by Shape Key In-Between"):
             "シェイプキー・インビトウィーンはFBXのバッチ出力に対応していません",
         ("*", "Shape Key In-Between export failed: {error}"): "シェイプキー・インビトウィーンの出力に失敗しました: {error}",
